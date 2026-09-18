@@ -87,6 +87,20 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     return totals.tokensInput + totals.tokensOutput + totals.tokensCacheRead + totals.tokensCacheWrite;
   }
 
+  function formatTimestamp(iso) {
+    if (!iso) return "";
+    const date = new Date(iso);
+    const pad = (n) => String(n).padStart(2, "0");
+    return (
+      date.getFullYear() +
+      "-" + pad(date.getMonth() + 1) +
+      "-" + pad(date.getDate()) +
+      " " + pad(date.getHours()) +
+      ":" + pad(date.getMinutes()) +
+      ":" + pad(date.getSeconds())
+    );
+  }
+
   function showView(name) {
     document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
     document.getElementById("view-" + name).classList.add("active");
@@ -135,7 +149,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       row.className = "clickable";
       row.innerHTML =
         "<td>" + session.sessionId + "</td>" +
-        "<td>" + session.lastActivity + "</td>" +
+        "<td>" + formatTimestamp(session.lastActivity) + "</td>" +
         "<td>" + formatUsd(session.totals.costUsd) + "</td>" +
         "<td>" + formatTokens(totalTokens(session.totals)) + "</td>";
       row.addEventListener("click", () => openSession(session.sessionId));
@@ -159,7 +173,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       row.innerHTML =
         "<td>" + task.taskId + "</td>" +
         "<td>" + task.model + "</td>" +
-        "<td>" + task.lastActivity + "</td>" +
+        "<td>" + formatTimestamp(task.lastActivity) + "</td>" +
         "<td>" + formatUsd(task.totals.costUsd) + "</td>" +
         "<td>" + formatTokens(totalTokens(task.totals)) + "</td>";
       row.addEventListener("click", () => openBreakdown({ kind: "task", sessionId, taskId: task.taskId }));

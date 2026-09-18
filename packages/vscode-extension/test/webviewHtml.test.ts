@@ -19,6 +19,12 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain('id="tasks-body"');
   });
 
+  it("formats last-activity timestamps as local 'YYYY-MM-DD HH:MM:SS' instead of raw ISO", () => {
+    expect(html).toContain("function formatTimestamp(iso)");
+    expect(html).toContain("formatTimestamp(session.lastActivity)");
+    expect(html).toContain("formatTimestamp(task.lastActivity)");
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");
