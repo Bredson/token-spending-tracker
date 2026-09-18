@@ -1,0 +1,40 @@
+{
+  "name": "token-tracker-vscode",
+  "displayName": "Token Tracker",
+  "description": "Local, offline token/cost usage tracking for Claude Code, per task/session/project.",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "token-tracker-local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "tokenTracker.openDashboard",
+        "title": "Token Tracker: Open Dashboard"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@token-tracker/engine": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
+  }
+}
