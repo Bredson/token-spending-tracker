@@ -1,10 +1,12 @@
 {
   "name": "token-tracker-vscode",
   "displayName": "Token Tracker",
-  "description": "Local, offline token/cost usage tracking for Claude Code, per task/session/project.",
+  "description": "Lokalne, offline śledzenie zużycia tokenów/kosztu Claude Code per zadanie/sesja/projekt.",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "publisher": "token-tracker-local",
+  "icon": "resources/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -24,16 +26,19 @@
     ]
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "watch": "tsc -p tsconfig.json --watch",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@token-tracker/engine": "^0.1.0"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "bundle": "rm -rf dist && esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs --sourcemap",
+    "build": "npm run typecheck && npm run bundle",
+    "watch": "npm run bundle -- --watch",
+    "test": "vitest run",
+    "package": "npm run build && cp ../../LICENSE ./LICENSE && vsce package --no-dependencies --allow-missing-repository -o dist/token-tracker.vsix"
   },
   "devDependencies": {
+    "@token-tracker/engine": "^0.1.0",
     "@types/vscode": "^1.85.0",
     "@types/node": "^22.10.2",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.11"
   }
