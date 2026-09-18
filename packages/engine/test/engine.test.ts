@@ -53,6 +53,12 @@ class FakeSource implements UsageSource {
   emit(records: UsageRecord[]): void {
     this.watchCallback?.(records);
   }
+
+  getSessionTitles(): Map<string, string> {
+    return this.titles ?? new Map();
+  }
+
+  titles: Map<string, string> | undefined;
 }
 
 describe("Engine.start", () => {
@@ -149,6 +155,36 @@ describe("Engine aggregation delegation", () => {
 
     const byDay = engine.aggregateByPeriod("day");
     expect(byDay).toHaveLength(1);
+  });
+});
+
+describe("Engine.getSessionTitles", () => {
+  it("returns an empty map when no source implements getSessionTitles", async () => {
+    const source = new FakeSource(true, []);
+    const engine = new Engine({ sources: [source] });
+    await engine.start();
+
+    expect(engine.getSessionTitles().size).toBe(0);
+  });
+
+  it("merges titles from sources that implement getSessionTitles", async () => {
+    const source = new FakeSource(true, []);
+    source.titles = new Map([["session-1", "Tytuł sesji"]]);
+    const engine = new Engine({ sources: [source] });
+    await engine.start();
+
+    expect(engine.getSessionTitles().get("session-1")).toBe("Tytuł sesji");
+  });
+
+  it("lets a later source override an earlier source's title for the same session", async () => {
+    const first = new FakeSource(true, []);
+    first.titles = new Map([["session-1", "Pierwszy tytuł"]]);
+    const second = new FakeSource(true, []);
+    second.titles = new Map([["session-1", "Drugi tytuł"]]);
+    const engine = new Engine({ sources: [first, second] });
+    await engine.start();
+
+    expect(engine.getSessionTitles().get("session-1")).toBe("Drugi tytuł");
   });
 });
 

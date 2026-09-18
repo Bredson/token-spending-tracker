@@ -32,6 +32,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
   .series { display: flex; align-items: flex-end; gap: 2px; height: 80px; margin-bottom: 16px; }
   .series .bar { flex: 1; background: var(--vscode-charts-blue, #3794ff); min-height: 1px; }
   .breakdown div { margin-bottom: 4px; }
+  .session-id { display: block; font-family: var(--vscode-editor-font-family, monospace); font-size: 0.8em; opacity: 0.6; }
   .view { display: none; }
   .view.active { display: block; }
   .empty { opacity: 0.7; }
@@ -85,6 +86,18 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
 
   function totalTokens(totals) {
     return totals.tokensInput + totals.tokensOutput + totals.tokensCacheRead + totals.tokensCacheWrite;
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  function sessionLabel(session) {
+    return session.title
+      ? escapeHtml(session.title) + '<span class="session-id">' + escapeHtml(session.sessionId) + "</span>"
+      : escapeHtml(session.sessionId);
   }
 
   function formatTimestamp(iso) {
@@ -148,7 +161,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       const row = document.createElement("tr");
       row.className = "clickable";
       row.innerHTML =
-        "<td>" + session.sessionId + "</td>" +
+        "<td>" + sessionLabel(session) + "</td>" +
         "<td>" + formatTimestamp(session.lastActivity) + "</td>" +
         "<td>" + formatUsd(session.totals.costUsd) + "</td>" +
         "<td>" + formatTokens(totalTokens(session.totals)) + "</td>";
@@ -182,7 +195,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
 
     renderCrumbs([
       { label: "Przegląd", onClick: () => renderOverview() },
-      { label: "Sesja " + sessionId, onClick: () => openSession(sessionId) },
+      { label: "Sesja " + (session.title || sessionId), onClick: () => openSession(sessionId) },
     ]);
     showView("session");
   }
@@ -203,7 +216,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
 
     const crumbs = [
       { label: "Przegląd", onClick: () => renderOverview() },
-      { label: "Sesja " + ref.sessionId, onClick: () => openSession(ref.sessionId) },
+      { label: "Sesja " + (session.title || ref.sessionId), onClick: () => openSession(ref.sessionId) },
     ];
     if (ref.kind === "task") {
       crumbs.push({ label: "Zadanie " + ref.taskId, onClick: () => openBreakdown(ref) });

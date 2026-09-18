@@ -76,6 +76,19 @@ describe("buildDashboardData", () => {
     expect(s1?.tasks.find((t) => t.taskId === "t1")?.totals.costUsd).toBe(1);
   });
 
+  it("attaches a session title when provided in the sessionTitles map, and leaves it undefined otherwise", () => {
+    const records = [
+      makeRecord({ id: "r1", sessionId: "s1" }),
+      makeRecord({ id: "r2", sessionId: "s2" }),
+    ];
+    const sessionTitles = new Map([["s1", "Rozpoznawalny tytuł"]]);
+
+    const data = buildDashboardData(records, now, sessionTitles);
+
+    expect(data.sessions.find((s) => s.sessionId === "s1")?.title).toBe("Rozpoznawalny tytuł");
+    expect(data.sessions.find((s) => s.sessionId === "s2")?.title).toBeUndefined();
+  });
+
   it("returns empty sessions and zero totals for no records", () => {
     const data = buildDashboardData([], now);
     expect(data.sessions).toEqual([]);

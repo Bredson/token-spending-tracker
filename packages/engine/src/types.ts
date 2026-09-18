@@ -36,4 +36,12 @@ export interface UsageSource {
   loadAll(): Promise<UsageRecord[]>;
 
   watch(onUpdate: (newRecords: UsageRecord[]) => void): Disposable;
+
+  /**
+   * Opcjonalne: rozpoznawalne tytuły sesji w języku naturalnym, jeśli źródło
+   * je udostępnia (np. Claude Code zapisuje `ai-title`/`custom-title` obok
+   * logów zużycia). Klucz mapy to `sessionId`. Źródła, które tego nie mają,
+   * po prostu nie implementują tej metody.
+   */
+  getSessionTitles?(): Map<string, string>;
 }

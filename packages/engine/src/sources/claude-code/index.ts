@@ -7,6 +7,7 @@ import { applyPricing, loadPricingTable, type PricingTable } from "../../pricing
 import type { Disposable, UsageRecord, UsageSource } from "../../types";
 import { FileCursorStore } from "./fileCursor";
 import { parseLine } from "./parseLine";
+import { parseSessionTitleLine } from "./sessionTitle";
 import { TaskGrouper } from "./taskGrouping";
 
 export interface ClaudeCodeSourceOptions {
@@ -37,6 +38,7 @@ export class ClaudeCodeSource implements UsageSource {
   private readonly warnedModels = new Set<string>();
   private readonly cursorStore = new FileCursorStore();
   private readonly grouper = new TaskGrouper();
+  private readonly sessionTitles = new Map<string, { aiTitle?: string; customTitle?: string }>();
 
   constructor(options: ClaudeCodeSourceOptions = {}) {
     this.projectsDir = options.projectsDir ?? join(homedir(), ".claude", "projects");
@@ -110,6 +112,22 @@ export class ClaudeCodeSource implements UsageSource {
   }
 
   /**
+   * Rozpoznawalne tytuły sesji zebrane dotąd z wpisów `ai-title`/`custom-title`
+   * (spec.md nie opisuje tych wpisów — patrz `sessionTitle.ts`). Tytuł nadany
+   * ręcznie (`custom-title`) ma pierwszeństwo nad wygenerowanym automatycznie.
+   */
+  getSessionTitles(): Map<string, string> {
+    const resolved = new Map<string, string>();
+    for (const [sessionId, titles] of this.sessionTitles) {
+      const title = titles.customTitle ?? titles.aiTitle;
+      if (title !== undefined) {
+        resolved.set(sessionId, title);
+      }
+    }
+    return resolved;
+  }
+
+  /**
    * Parsuje przyrost linii jednego pliku (sekwencyjnie, w kolejności zapisu),
    * aktualizuje grupowanie zadań i zwraca `UsageRecord[]` wyłącznie dla
    * wpisów niosących policzalne zużycie tokenów (`type: "assistant"` z
@@ -120,6 +138,18 @@ export class ClaudeCodeSource implements UsageSource {
     const records: UsageRecord[] = [];
 
     for (const line of lines) {
+      const titleEntry = parseSessionTitleLine(line);
+      if (titleEntry !== null) {
+        const existing = this.sessionTitles.get(titleEntry.sessionId) ?? {};
+        if (titleEntry.kind === "ai") {
+          existing.aiTitle = titleEntry.title;
+        } else {
+          existing.customTitle = titleEntry.title;
+        }
+        this.sessionTitles.set(titleEntry.sessionId, existing);
+        continue;
+      }
+
       const entry = parseLine(line);
       if (entry === null) {
         continue;

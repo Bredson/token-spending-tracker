@@ -130,6 +130,82 @@ describe("ClaudeCodeSource.loadAll", () => {
   });
 });
 
+describe("ClaudeCodeSource.getSessionTitles", () => {
+  it("returns nothing when no title entries were ever seen", async () => {
+    const sessionFile = join(dir, "session-notitle.jsonl");
+    await writeFile(
+      sessionFile,
+      humanLine({ uuid: "u1", sessionId: "session-notitle" }) + "\n",
+    );
+
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    await source.loadAll();
+
+    expect(source.getSessionTitles().get("session-notitle")).toBeUndefined();
+  });
+
+  it("picks up an ai-title entry alongside the usual usage lines", async () => {
+    const sessionFile = join(dir, "session-ai-title.jsonl");
+    await writeFile(
+      sessionFile,
+      [
+        humanLine({ uuid: "u1", sessionId: "session-ai-title" }),
+        JSON.stringify({
+          type: "ai-title",
+          sessionId: "session-ai-title",
+          aiTitle: "Ranking źródeł wiedzy o AI",
+        }),
+      ].join("\n") + "\n",
+    );
+
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    await source.loadAll();
+
+    expect(source.getSessionTitles().get("session-ai-title")).toBe("Ranking źródeł wiedzy o AI");
+  });
+
+  it("prefers a custom-title over an ai-title for the same session", async () => {
+    const sessionFile = join(dir, "session-custom-title.jsonl");
+    await writeFile(
+      sessionFile,
+      [
+        JSON.stringify({
+          type: "ai-title",
+          sessionId: "session-custom-title",
+          aiTitle: "Tytuł automatyczny",
+        }),
+        JSON.stringify({
+          type: "custom-title",
+          sessionId: "session-custom-title",
+          customTitle: "Tytuł nadany ręcznie",
+        }),
+      ].join("\n") + "\n",
+    );
+
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    await source.loadAll();
+
+    expect(source.getSessionTitles().get("session-custom-title")).toBe("Tytuł nadany ręcznie");
+  });
+
+  it("does not turn a title entry into a UsageRecord", async () => {
+    const sessionFile = join(dir, "session-title-only.jsonl");
+    await writeFile(
+      sessionFile,
+      JSON.stringify({
+        type: "ai-title",
+        sessionId: "session-title-only",
+        aiTitle: "Tylko tytuł, bez zużycia",
+      }) + "\n",
+    );
+
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    const records = await source.loadAll();
+
+    expect(records).toEqual([]);
+  });
+});
+
 describe("ClaudeCodeSource.watch", () => {
   it("emits only newly appended records, never re-emitting what loadAll already returned", async () => {
     const sessionFile = join(dir, "session-2.jsonl");

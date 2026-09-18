@@ -17,6 +17,8 @@ export interface TaskSummary {
 
 export interface SessionSummary {
   sessionId: string;
+  /** Rozpoznawalny tytuł w języku naturalnym (jeśli źródło go dostarczyło) — obok `sessionId`, nie zamiast niego. */
+  title?: string;
   projectPath: string;
   lastActivity: string;
   totals: UsageTotals;
@@ -47,7 +49,11 @@ const DAILY_SERIES_LENGTH = 30;
  * Buduje pełen, gotowy do wyrenderowania widok dashboardu z płaskiej listy rekordów.
  * Webview nie wykonuje żadnej agregacji (spec.md 6.3) — cała ciężka praca dzieje się tutaj.
  */
-export function buildDashboardData(records: UsageRecord[], now: Date = new Date()): DashboardData {
+export function buildDashboardData(
+  records: UsageRecord[],
+  now: Date = new Date(),
+  sessionTitles: Map<string, string> = new Map(),
+): DashboardData {
   const todayKey = periodKey(now.toISOString(), "day");
   const weekKey = periodKey(now.toISOString(), "week");
   const monthKey = periodKey(now.toISOString(), "month");
@@ -64,7 +70,7 @@ export function buildDashboardData(records: UsageRecord[], now: Date = new Date(
       month: sumTotals(monthRecords),
       dailyCostSeries: buildDailyCostSeries(records, now),
     },
-    sessions: buildSessionSummaries(records),
+    sessions: buildSessionSummaries(records, sessionTitles),
   };
 }
 
@@ -85,7 +91,10 @@ function buildDailyCostSeries(records: UsageRecord[], now: Date): DailyCostPoint
   return series;
 }
 
-function buildSessionSummaries(records: UsageRecord[]): SessionSummary[] {
+function buildSessionSummaries(
+  records: UsageRecord[],
+  sessionTitles: Map<string, string>,
+): SessionSummary[] {
   const sessionGroups = aggregateBySession(records);
   const recordsBySession = new Map<string, UsageRecord[]>();
   for (const record of records) {
@@ -102,6 +111,7 @@ function buildSessionSummaries(records: UsageRecord[]): SessionSummary[] {
     const lastActivity = latestTimestamp(sessionRecords);
     return {
       sessionId: group.key,
+      title: sessionTitles.get(group.key),
       projectPath: sessionRecords[0]?.projectPath ?? "",
       lastActivity,
       totals: group.totals,

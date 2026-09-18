@@ -87,6 +87,24 @@ export class Engine implements Disposable {
     return aggregateByPeriod(this.records, granularity);
   }
 
+  /**
+   * Rozpoznawalne tytuły sesji zebrane ze wszystkich źródeł, które je udostępniają
+   * (patrz `UsageSource.getSessionTitles`). Jeśli więcej niż jedno źródło zna tytuł
+   * tej samej sesji, wygrywa ostatnie w kolejności rejestracji źródeł.
+   */
+  getSessionTitles(): Map<string, string> {
+    const merged = new Map<string, string>();
+    for (const source of this.sources) {
+      const titles = source.getSessionTitles?.();
+      if (titles) {
+        for (const [sessionId, title] of titles) {
+          merged.set(sessionId, title);
+        }
+      }
+    }
+    return merged;
+  }
+
   /** Zatrzymuje wszystkie obserwatory źródeł. */
   dispose(): void {
     for (const disposable of this.watchDisposables) {

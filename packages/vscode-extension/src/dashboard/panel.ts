@@ -58,7 +58,7 @@ export class DashboardPanel {
   private postUpdate(engine: Engine): void {
     void this.panel.webview.postMessage({
       type: "update",
-      data: buildDashboardData(engine.getRecords()),
+      data: buildDashboardData(engine.getRecords(), new Date(), engine.getSessionTitles()),
     });
   }
 

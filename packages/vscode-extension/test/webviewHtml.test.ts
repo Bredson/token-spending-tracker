@@ -25,6 +25,13 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain("formatTimestamp(task.lastActivity)");
   });
 
+  it("shows a session's natural-language title alongside its raw session id, escaping any HTML in it", () => {
+    expect(html).toContain("function sessionLabel(session)");
+    expect(html).toContain("session.title");
+    expect(html).toContain("function escapeHtml(value)");
+    expect(html).toContain("sessionLabel(session)");
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");
