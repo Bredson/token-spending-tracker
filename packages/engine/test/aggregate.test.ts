@@ -5,6 +5,7 @@ import {
   aggregateBySession,
   aggregateByTask,
   periodKey,
+  sumTotals,
 } from "../src/aggregate";
 import type { UsageRecord } from "../src/types";
 
@@ -25,6 +26,34 @@ function makeRecord(overrides: Partial<UsageRecord> = {}): UsageRecord {
     ...overrides,
   };
 }
+
+describe("sumTotals", () => {
+  it("sums all records into a single totals object, ignoring grouping keys", () => {
+    const records = [
+      makeRecord({ id: "r1", tokensInput: 100, costUsd: 1 }),
+      makeRecord({ id: "r2", tokensInput: 200, costUsd: 2, taskId: "task-2" }),
+    ];
+    expect(sumTotals(records)).toEqual({
+      tokensInput: 300,
+      tokensOutput: 100,
+      tokensCacheRead: 0,
+      tokensCacheWrite: 0,
+      costUsd: 3,
+      recordCount: 2,
+    });
+  });
+
+  it("returns all-zero totals for an empty array", () => {
+    expect(sumTotals([])).toEqual({
+      tokensInput: 0,
+      tokensOutput: 0,
+      tokensCacheRead: 0,
+      tokensCacheWrite: 0,
+      costUsd: 0,
+      recordCount: 0,
+    });
+  });
+});
 
 describe("aggregateByTask", () => {
   it("sums tokens and cost across records sharing the same taskId", () => {

@@ -1,0 +1,28 @@
+import { describe, expect, it } from "vitest";
+import { renderDashboardHtml } from "../src/dashboard/webviewHtml";
+
+describe("renderDashboardHtml", () => {
+  const html = renderDashboardHtml({ cspSource: "vscode-webview://abc", nonce: "test-nonce-123" });
+
+  it("locks down CSP to the given nonce and csp source, with no network access allowed", () => {
+    expect(html).toContain("default-src 'none'");
+    expect(html).toContain("script-src 'nonce-test-nonce-123'");
+    expect(html).toContain("vscode-webview://abc");
+    expect(html).not.toMatch(/https?:\/\//);
+  });
+
+  it("includes containers for all four required views (spec.md 6.2)", () => {
+    expect(html).toContain('id="view-overview"');
+    expect(html).toContain('id="view-session"');
+    expect(html).toContain('id="view-breakdown"');
+    expect(html).toContain('id="sessions-body"');
+    expect(html).toContain('id="tasks-body"');
+  });
+
+  it("only reads data via postMessage, never fetch/XHR", () => {
+    expect(html).not.toContain("fetch(");
+    expect(html).not.toContain("XMLHttpRequest");
+    expect(html).toContain("acquireVsCodeApi");
+    expect(html).toContain('addEventListener("message"');
+  });
+});

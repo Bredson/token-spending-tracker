@@ -37,6 +37,15 @@ function addRecordToTotals(totals: UsageTotals, record: UsageRecord): void {
   totals.recordCount += 1;
 }
 
+/** Sumuje pola tokenowe + koszt po wszystkich rekordach, bez grupowania. */
+export function sumTotals(records: UsageRecord[]): UsageTotals {
+  const totals = emptyTotals();
+  for (const record of records) {
+    addRecordToTotals(totals, record);
+  }
+  return totals;
+}
+
 function groupBy(
   records: UsageRecord[],
   keyOf: (record: UsageRecord) => string,

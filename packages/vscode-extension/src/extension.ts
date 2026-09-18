@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ClaudeCodeSource, Engine } from "@token-tracker/engine";
 import { formatStatusBarText } from "./statusBar";
+import { DashboardPanel } from "./dashboard/panel";
 
 let engine: Engine | undefined;
 
@@ -29,11 +30,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(engine.onChange(updateStatusBar));
 
-  // Panel dashboardu (spec.md 6.2) przychodzi w kolejnym kroku planu — na
-  // razie komenda istnieje, żeby status bar miał gdzie kierować kliknięcie.
   context.subscriptions.push(
     vscode.commands.registerCommand("tokenTracker.openDashboard", () => {
-      void vscode.window.showInformationMessage("Token Tracker: panel dashboardu jeszcze nie istnieje.");
+      if (engine) {
+        DashboardPanel.createOrShow(context, engine);
+      }
     }),
   );
 
