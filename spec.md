@@ -82,6 +82,13 @@ Reguły:
 - Przechowywana jako plik konfiguracyjny w silniku (np. `pricing.json`), możliwa do nadpisania przez użytkownika (własny plik w ustawieniach wtyczki) — na wypadek zmiany cen przez dostawcę lub nowego modelu nieobecnego jeszcze w domyślnej tabeli.
 - Jeśli model nie występuje w tabeli: silnik zwraca `costUsd = 0` dla tego rekordu i zgłasza ostrzeżenie (widoczne w UI jako "nieznany model — koszt nieprzeliczony"), **nigdy nie przerywa działania**.
 
+**Obserwacja z realnych danych (Krok 9, `~/.claude/projects`, 95 plików / 8398 rekordów)**: pole `message.model` w logach nie zawsze jest kanoniczną nazwą modelu z cennika Anthropic. Napotkane warianty:
+- Datowane snapshoty (`claude-haiku-4-5-20251001` zamiast `claude-haiku-4-5`) — dodane jako osobne wpisy w `pricing.json` z tymi samymi stawkami co model bazowy, zamiast wprowadzać logikę normalizacji nazw (prostsze, zgodne z resztą tabeli).
+- Warianty zapisu wersji z myślnikiem zamiast kropką (`claude-fable-5-1` obok `claude-fable-5.1`) — potraktowane tak samo, jako osobny wpis.
+- Modele poprzednich generacji używane w starszych sesjach (`claude-sonnet-4-6`, `claude-opus-4-8`) — ceny dodane do tabeli po sprawdzeniu aktualnego cennika Anthropic (nie zgadywane).
+- Modele spoza Anthropic uruchamiane przez Claude Code (`openai/gpt-6-astra`) — świadomie pozostają "nieznanym modelem" (`costUsd = 0` + ostrzeżenie), ponieważ nie ma dla nich cennika Anthropic; to oczekiwane zachowanie, nie błąd.
+- Wpis `<synthetic>` (bez faktycznego zużycia tokenów) — pomijany naturalnie, bo `applyPricing` nie jest wołane dla rekordów bez `usage`.
+
 ---
 
 ## 4. Interfejs źródła danych (`UsageSource`) — pluggable parser

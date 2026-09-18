@@ -17,10 +17,40 @@
     "cacheReadPer1M": 0.1,
     "cacheWritePer1M": 1.25
   },
+  "claude-haiku-4-5-20251001": {
+    "inputPer1M": 1,
+    "outputPer1M": 5,
+    "cacheReadPer1M": 0.1,
+    "cacheWritePer1M": 1.25
+  },
   "claude-fable-5.1": {
+    "inputPer1M": 10,
+    "outputPer1M": 50,
+    "cacheReadPer1M": 0.25,
+    "cacheWritePer1M": 12.5
+  },
+  "claude-fable-5-1": {
+    "inputPer1M": 10,
+    "outputPer1M": 50,
+    "cacheReadPer1M": 0.25,
+    "cacheWritePer1M": 12.5
+  },
+  "claude-fable-5": {
     "inputPer1M": 10,
     "outputPer1M": 50,
     "cacheReadPer1M": 1,
     "cacheWritePer1M": 12.5
+  },
+  "claude-sonnet-4-6": {
+    "inputPer1M": 3,
+    "outputPer1M": 15,
+    "cacheReadPer1M": 0.3,
+    "cacheWritePer1M": 3.75
+  },
+  "claude-opus-4-8": {
+    "inputPer1M": 5,
+    "outputPer1M": 25,
+    "cacheReadPer1M": 0.5,
+    "cacheWritePer1M": 6.25
   }
 }
