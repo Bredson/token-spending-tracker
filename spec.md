@@ -156,8 +156,9 @@ Odpowiedzialności silnika:
 1. Rejestr zarejestrowanych `UsageSource` (w MVP: lista jednoelementowa).
 2. Wywołanie `loadAll()` + `watch()` na starcie, scalenie strumieni z wielu źródeł do jednego wewnętrznego magazynu `UsageRecord[]` (w pamięci; trwałość na dysku poza zakresem MVP — dane i tak są odtwarzalne z logów źródłowych przy każdym starcie).
 3. Funkcje agregujące: `aggregateByTask()`, `aggregateBySession()`, `aggregateByPeriod(day|week|month)`, `aggregateByProject()`.
-4. Zastosowanie cost model (sekcja 3.3) do każdego `UsageRecord` w momencie jego przyjęcia do magazynu.
-5. Publiczne API zwracające gotowe struktury do wyświetlenia (sumy, listy, drill-down po `taskId`/`sessionId`) — UI nie robi żadnej logiki agregującej samodzielnie.
+4. Publiczne API zwracające gotowe struktury do wyświetlenia (sumy, listy, drill-down po `taskId`/`sessionId`) — UI nie robi żadnej logiki agregującej samodzielnie.
+
+**Korekta względem pierwotnego założenia (ustalona przy implementacji Kroku 5/6):** `UsageSource.loadAll()`/`watch()` zwracają już w pełni znormalizowane `UsageRecord`, łącznie z wypełnionym `costUsd` — interfejs (sekcja 4) nie przewiduje pośredniego formatu "record bez ceny", więc to **implementacja danego źródła** (np. `ClaudeCodeSource`) aplikuje cost model (`applyPricing()` z `pricing.ts`) w momencie budowy rekordu, nie silnik centralnie. Silnik udostępnia `pricing.ts` jako wspólny, opcjonalny moduł do wykorzystania przez implementacje źródeł — nie wymusza jego użycia, więc przyszłe źródło z inną logiką cenową (np. płaska stawka) może pominąć ten moduł. Silnik jedynie przyjmuje już wycenione rekordy do magazynu i agreguje.
 
 ---
 
