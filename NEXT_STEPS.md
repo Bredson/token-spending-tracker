@@ -29,10 +29,13 @@ obecnej wersji — to propozycje, nie plan.
   (~250 ms na 95 plikach u użytkownika, więc nie jest to pilne, ale przy dużo większej historii
   logów czas startu będzie rósł liniowo). Kandydat: zapis `UsageRecord[]` + kursory plików do
   `context.globalStorageUri`, z rewalidacją przez `mtime`/`size` przy starcie.
-- **Publikacja w VS Code Marketplace** — obecnie instalacja jest ręczna (`.vsix` + "Install from
-  VSIX..."). Wymagałoby: konta wydawcy (`vsce login`), uzupełnienia `repository` w
-  `package.json` (dziś celowo pominięte — brak zdalnego repo git), i decyzji, czy projekt ma być
-  publiczny.
+- **Publikacja w VS Code Marketplace** — przygotowane (2026-09-24): publisher `bredson` w
+  `package.json`, `repository` → publiczne repo GitHub, README/CHANGELOG wtyczki, skrypt
+  `npm run publish`. **Zatrzymane** na wymaganiu Microsoftu: PAT do `vsce login` wydaje tylko
+  Azure DevOps, a nowa organizacja Azure DevOps wymaga dziś powiązanej subskrypcji Azure (nawet
+  darmowej, z kartą). Do odblokowania: darmowe konto Azure na tym samym koncie Microsoft albo
+  członkostwo (Stakeholder) w czyjejś istniejącej organizacji Azure DevOps; potem
+  `npx vsce login bredson` i `npm run publish -w packages/vscode-extension`.
 - **Wbudowane ceny modeli spoza Anthropic** (`openai/gpt-6-astra` itd. uruchamiane przez bramkę) —
   dziś do wpisania ręcznie w `tokenTracker.pricingOverrides`; wymagałoby wiarygodnego źródła cen
   per bramka, bo ceny bramki mogą różnić się od publicznych.
