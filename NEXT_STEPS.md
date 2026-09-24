@@ -1,9 +1,18 @@
 # Token Tracker — możliwe kolejne kroki
 
-Stan na 2026-09-18: MVP jest kompletne, przetestowane (81 testów) i działa u użytkownika jako
+Stan na 2026-09-24: MVP jest kompletne, przetestowane (110 testów) i działa u użytkownika jako
 zainstalowany `.vsix`. Poniżej lista kierunków rozwoju — nieuszeregowana sztywno, ale pogrupowana
 od najmniejszego wysiłku do największego. Żaden z tych punktów nie jest wymagany do działania
 obecnej wersji — to propozycje, nie plan.
+
+## Zrobione po 2026-09-18
+
+- **Normalizacja ID modeli w cenniku** — `anthropic/<model>[1m]`, aliasy `sonnet`/`opus`/`haiku`/`fable`
+  i `<synthetic>` są wyceniane poprawnie; modele wciąż bez ceny trafiają do ostrzeżenia w dashboardzie
+  zamiast być cicho liczone jako $ 0.
+- **Konfigurowalny cennik przez ustawienia VS Code** — `tokenTracker.pricingFile` i
+  `tokenTracker.pricingOverrides`, przeładowanie na żywo (patrz README).
+- **Rozbicie kosztów per model** w widoku "Rozbicie tokenów" i lista modeli per zadanie.
 
 ## Drobne usprawnienia (szybkie do zrobienia)
 
@@ -19,10 +28,6 @@ obecnej wersji — to propozycje, nie plan.
 
 ## Funkcje średniej wielkości
 
-- **Konfigurowalny cennik przez ustawienie VS Code** — `pricing.json` jest już scalany z
-  opcjonalnym plikiem custom (`loadPricingTable(customPath?)`), ale nie jest to jeszcze podpięte
-  pod żadne ustawienie w `package.json` wtyczki (`contributes.configuration`). To domknęłoby
-  punkt "Konfigurowalny/nadpisywalny cennik" z sekcji 3.3/7 `spec.md`.
 - **Trwały cache na dysku** — dziś `loadAll()` zawsze odtwarza cały stan z logów przy starcie
   (~250 ms na 95 plikach u użytkownika, więc nie jest to pilne, ale przy dużo większej historii
   logów czas startu będzie rósł liniowo). Kandydat: zapis `UsageRecord[]` + kursory plików do
@@ -31,9 +36,9 @@ obecnej wersji — to propozycje, nie plan.
   VSIX..."). Wymagałoby: konta wydawcy (`vsce login`), uzupełnienia `repository` w
   `package.json` (dziś celowo pominięte — brak zdalnego repo git), i decyzji, czy projekt ma być
   publiczny.
-- **Rozbicie kosztów per model na widoku "Rozbicie tokenów"** — dziś breakdown pokazuje sumę
-  tokenów/kosztu dla sesji/zadania; przy zadaniach łączących kilka modeli (np. Sonnet + Haiku w
-  jednej sesji) przydałby się podział per model.
+- **Wbudowane ceny modeli spoza Anthropic** (`openai/gpt-6-astra` itd. uruchamiane przez bramkę) —
+  dziś do wpisania ręcznie w `tokenTracker.pricingOverrides`; wymagałoby wiarygodnego źródła cen
+  per bramka, bo ceny bramki mogą różnić się od publicznych.
 
 ## Kierunki architektoniczne (większy wysiłek, ale niezablokowane obecnym projektem)
 

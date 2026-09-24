@@ -89,6 +89,8 @@ Reguły:
 - Modele spoza Anthropic uruchamiane przez Claude Code (`openai/gpt-6-astra`) — świadomie pozostają "nieznanym modelem" (`costUsd = 0` + ostrzeżenie), ponieważ nie ma dla nich cennika Anthropic; to oczekiwane zachowanie, nie błąd.
 - Wpis `<synthetic>` (bez faktycznego zużycia tokenów) — pomijany naturalnie, bo `applyPricing` nie jest wołane dla rekordów bez `usage`.
 
+**Aktualizacja (2026-09-24, ~8700 rekordów)**: pełna próbka pokazała kolejne warianty, których nie da się sensownie pokryć osobnymi wpisami w tabeli, więc `applyPricing` dostało jednak krok normalizacji (`normalizeModelId`): zdejmowanie prefiksu bramki `anthropic/` i sufiksu okna kontekstu `[1m]` (`anthropic/claude-fable-5-1[1m]`), rozwiązywanie aliasów rodzin zapisywanych przez `/model sonnet` (`sonnet`, `opus`, `haiku`, `fable` → aktualny model rodziny). `<synthetic>` okazał się jednak występować z polem `usage` — jest teraz jawnie wyceniany na 0 bez zgłaszania jako nieznany. Modele nadal bez ceny (`openai/gpt-6-astra`) są wypisywane w dashboardzie (`Engine.getUnknownModels()`), a użytkownik może je wycenić przez ustawienia `tokenTracker.pricingFile` / `tokenTracker.pricingOverrides` — to domyka punkt "konfigurowalny cennik" z sekcji 7.
+
 ---
 
 ## 4. Interfejs źródła danych (`UsageSource`) — pluggable parser
