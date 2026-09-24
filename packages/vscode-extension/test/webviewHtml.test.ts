@@ -50,6 +50,12 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain("modelsLabel(task.byModel)");
   });
 
+  it("lists the models used by each session in a dedicated column of the overview table", () => {
+    expect(html).toMatch(/<th>Sesja<\/th><th>Model<\/th>/);
+    expect(html).toContain("modelsLabel(session.byModel)");
+    expect(html).toContain('colspan="5"');
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");

@@ -55,7 +55,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     <div class="series" id="overview-series"></div>
     <h2>Sesje</h2>
     <table>
-      <thead><tr><th>Sesja</th><th>Ostatnia aktywność</th><th>Koszt</th><th>Tokeny</th></tr></thead>
+      <thead><tr><th>Sesja</th><th>Model</th><th>Ostatnia aktywność</th><th>Koszt</th><th>Tokeny</th></tr></thead>
       <tbody id="sessions-body"></tbody>
     </table>
   </section>
@@ -192,7 +192,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     sessionsBody.innerHTML = "";
     if (data.sessions.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = '<td colspan="4" class="empty">Brak danych</td>';
+      row.innerHTML = '<td colspan="5" class="empty">Brak danych</td>';
       sessionsBody.appendChild(row);
     }
     for (const session of data.sessions) {
@@ -200,6 +200,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       row.className = "clickable";
       row.innerHTML =
         "<td>" + sessionLabel(session) + "</td>" +
+        "<td>" + modelsLabel(session.byModel) + "</td>" +
         "<td>" + formatTimestamp(session.lastActivity) + "</td>" +
         "<td>" + formatUsd(session.totals.costUsd) + "</td>" +
         "<td>" + formatTokens(totalTokens(session.totals)) + "</td>";
