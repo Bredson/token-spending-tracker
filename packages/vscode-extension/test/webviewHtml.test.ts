@@ -64,6 +64,13 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain('addEventListener("input"');
   });
 
+  it("shows the session's project path with an open-project button that posts an openProject message", () => {
+    expect(html).toContain('id="session-project"');
+    expect(html).toContain("function renderSessionProject(session)");
+    expect(html).toMatch(/renderSessionProject\(session\)[\s\S]*textContent = session\.projectPath/);
+    expect(html).toMatch(/type: "openProject", projectPath: session\.projectPath/);
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");

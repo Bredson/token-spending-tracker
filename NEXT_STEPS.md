@@ -15,11 +15,11 @@ obecnej wersji — to propozycje, nie plan.
 - **Rozbicie kosztów per model** w widoku "Rozbicie tokenów" i lista modeli per zadanie/sesję.
 - **Filtrowanie sesji** — pole nad tabelą sesji (tytuł, ID, model; bez rozróżniania wielkości liter),
   z licznikiem "N / M"; filtr zostaje aktywny przy odświeżeniu danych.
+- **Przycisk "Otwórz projekt w nowym oknie"** w widoku sesji (`vscode.openFolder`, z ostrzeżeniem,
+  gdy katalog z logów już nie istnieje).
 
 ## Drobne usprawnienia (szybkie do zrobienia)
 
-- **Link "otwórz projekt"** przy sesji — `projectPath` już jest w danych, brakuje tylko akcji
-  (np. `vscode.commands.executeCommand("vscode.openFolder", ...)`) w panelu.
 - **Ikona/status w status barze reagujący na tytuł sesji** — obecnie status bar pokazuje tylko
   koszt/tokeny bieżącego projektu; mógłby też pokazywać tytuł aktywnej sesji w tooltipie.
 - **Test na realnym re-tytułowaniu w `watch()`** — obecne testy `ClaudeCodeSource` sprawdzają

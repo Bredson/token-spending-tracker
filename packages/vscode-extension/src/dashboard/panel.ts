@@ -1,5 +1,7 @@
+import { existsSync } from "node:fs";
 import * as vscode from "vscode";
 import type { Engine } from "@token-tracker/engine";
+import { openProjectFolder } from "../openProject";
 import { buildDashboardData } from "./dataProvider";
 import { renderDashboardHtml } from "./webviewHtml";
 
@@ -53,9 +55,19 @@ export class DashboardPanel {
     this.postUpdate();
     this.engineSubscription = engine.onChange(() => this.postUpdate());
 
-    this.panel.webview.onDidReceiveMessage((message: { type: string }) => {
+    this.panel.webview.onDidReceiveMessage((message: { type: string; projectPath?: unknown }) => {
       if (message.type === "ready") {
         this.postUpdate();
+      } else if (message.type === "openProject") {
+        void openProjectFolder(message.projectPath, {
+          exists: existsSync,
+          openFolder: async (path) => {
+            await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(path), {
+              forceNewWindow: true,
+            });
+          },
+          warn: (text) => void vscode.window.showWarningMessage(text),
+        });
       }
     });
 

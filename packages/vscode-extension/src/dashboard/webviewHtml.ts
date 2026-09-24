@@ -43,6 +43,10 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
   .filter input { flex: 1; max-width: 360px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 4px 6px; font: inherit; }
   .filter input:focus { outline: 1px solid var(--vscode-focusBorder); }
   .filter .count { opacity: 0.7; font-size: 0.85em; }
+  .project { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.9em; }
+  .project code { font-family: var(--vscode-editor-font-family, monospace); opacity: 0.8; }
+  .project button { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 2px; padding: 3px 10px; cursor: pointer; font: inherit; }
+  .project button:hover { background: var(--vscode-button-secondaryHoverBackground); }
 </style>
 </head>
 <body>
@@ -70,6 +74,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
 
   <section id="view-session" class="view">
     <h1>Sesja</h1>
+    <div class="project" id="session-project"></div>
     <table>
       <thead><tr><th>Zadanie</th><th>Model</th><th>Ostatnia aktywność</th><th>Koszt</th><th>Tokeny</th></tr></thead>
       <tbody id="tasks-body"></tbody>
@@ -242,10 +247,26 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     if (data) renderSessionsTable();
   });
 
+  function renderSessionProject(session) {
+    const el = document.getElementById("session-project");
+    el.innerHTML = "";
+    if (!session.projectPath) return;
+    const code = document.createElement("code");
+    code.textContent = session.projectPath;
+    const btn = document.createElement("button");
+    btn.textContent = "Otwórz projekt w nowym oknie";
+    btn.addEventListener("click", () => {
+      vscode.postMessage({ type: "openProject", projectPath: session.projectPath });
+    });
+    el.appendChild(code);
+    el.appendChild(btn);
+  }
+
   function openSession(sessionId) {
     currentSessionId = sessionId;
     const session = data.sessions.find((s) => s.sessionId === sessionId);
     if (!session) return;
+    renderSessionProject(session);
 
     const tasksBody = document.getElementById("tasks-body");
     tasksBody.innerHTML = "";
