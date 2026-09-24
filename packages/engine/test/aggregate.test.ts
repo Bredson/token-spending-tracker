@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  aggregateByModel,
   aggregateByPeriod,
   aggregateByProject,
   aggregateBySession,
@@ -105,6 +106,22 @@ describe("aggregateByProject", () => {
     const byKey = new Map(result.map((group) => [group.key, group.totals]));
     expect(byKey.get("/tmp/project-a")?.recordCount).toBe(2);
     expect(byKey.get("/tmp/project-b")?.recordCount).toBe(1);
+  });
+});
+
+describe("aggregateByModel", () => {
+  it("groups records per model id, summing tokens and cost within each group", () => {
+    const records = [
+      makeRecord({ id: "r1", model: "claude-sonnet-5", costUsd: 1, tokensInput: 100 }),
+      makeRecord({ id: "r2", model: "claude-haiku-4-5", costUsd: 0.1, tokensInput: 10 }),
+      makeRecord({ id: "r3", model: "claude-sonnet-5", costUsd: 2, tokensInput: 200 }),
+    ];
+    const groups = aggregateByModel(records);
+    expect(groups.map((g) => g.key).sort()).toEqual(["claude-haiku-4-5", "claude-sonnet-5"]);
+    const sonnet = groups.find((g) => g.key === "claude-sonnet-5");
+    expect(sonnet?.totals.costUsd).toBe(3);
+    expect(sonnet?.totals.tokensInput).toBe(300);
+    expect(sonnet?.totals.recordCount).toBe(2);
   });
 });
 

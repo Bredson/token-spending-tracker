@@ -1,4 +1,5 @@
 import {
+  aggregateByModel,
   aggregateBySession,
   aggregateByTask,
   periodKey,
@@ -7,12 +8,18 @@ import {
   type UsageTotals,
 } from "@token-tracker/engine";
 
+export interface ModelBreakdown {
+  model: string;
+  totals: UsageTotals;
+}
+
 /** Rozbicie tokenów jest już zawarte w `UsageTotals` (input/output/cache-read/cache-write). */
 export interface TaskSummary {
   taskId: string;
-  model: string;
   lastActivity: string;
   totals: UsageTotals;
+  /** Per model, od najdroższego. */
+  byModel: ModelBreakdown[];
 }
 
 export interface SessionSummary {
@@ -22,6 +29,7 @@ export interface SessionSummary {
   projectPath: string;
   lastActivity: string;
   totals: UsageTotals;
+  byModel: ModelBreakdown[];
   tasks: TaskSummary[];
 }
 
@@ -119,6 +127,7 @@ function buildSessionSummaries(
       projectPath: sessionRecords[0]?.projectPath ?? "",
       lastActivity,
       totals: group.totals,
+      byModel: buildModelBreakdown(sessionRecords),
       tasks: buildTaskSummaries(sessionRecords),
     };
   });
@@ -143,14 +152,20 @@ function buildTaskSummaries(sessionRecords: UsageRecord[]): TaskSummary[] {
     const taskRecords = recordsByTask.get(group.key) ?? [];
     return {
       taskId: group.key,
-      model: taskRecords[taskRecords.length - 1]?.model ?? "",
       lastActivity: latestTimestamp(taskRecords),
       totals: group.totals,
+      byModel: buildModelBreakdown(taskRecords),
     };
   });
 
   summaries.sort((a, b) => b.lastActivity.localeCompare(a.lastActivity));
   return summaries;
+}
+
+function buildModelBreakdown(records: UsageRecord[]): ModelBreakdown[] {
+  return aggregateByModel(records)
+    .map((group) => ({ model: group.key, totals: group.totals }))
+    .sort((a, b) => b.totals.costUsd - a.totals.costUsd);
 }
 
 function latestTimestamp(records: UsageRecord[]): string {

@@ -71,6 +71,11 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
   <section id="view-breakdown" class="view">
     <h1>Rozbicie tokenów</h1>
     <div class="breakdown" id="breakdown-body"></div>
+    <h2>Per model</h2>
+    <table>
+      <thead><tr><th>Model</th><th>Input</th><th>Output</th><th>Cache read</th><th>Cache write</th><th>Koszt</th></tr></thead>
+      <tbody id="breakdown-models"></tbody>
+    </table>
   </section>
 
 <script nonce="${nonce}">
@@ -102,6 +107,24 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     return session.title
       ? escapeHtml(session.title) + '<span class="session-id">' + escapeHtml(session.sessionId) + "</span>"
       : escapeHtml(session.sessionId);
+  }
+
+  function modelsLabel(byModel) {
+    return byModel.map((entry) => escapeHtml(entry.model)).join(", ");
+  }
+
+  function renderModelRows(byModel) {
+    return byModel
+      .map((entry) =>
+        "<tr>" +
+          "<td>" + escapeHtml(entry.model) + "</td>" +
+          "<td>" + formatTokens(entry.totals.tokensInput) + "</td>" +
+          "<td>" + formatTokens(entry.totals.tokensOutput) + "</td>" +
+          "<td>" + formatTokens(entry.totals.tokensCacheRead) + "</td>" +
+          "<td>" + formatTokens(entry.totals.tokensCacheWrite) + "</td>" +
+          "<td>" + formatUsd(entry.totals.costUsd) + "</td>" +
+        "</tr>")
+      .join("");
   }
 
   function formatTimestamp(iso) {
@@ -199,8 +222,8 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       const row = document.createElement("tr");
       row.className = "clickable";
       row.innerHTML =
-        "<td>" + task.taskId + "</td>" +
-        "<td>" + task.model + "</td>" +
+        "<td>" + escapeHtml(task.taskId) + "</td>" +
+        "<td>" + modelsLabel(task.byModel) + "</td>" +
         "<td>" + formatTimestamp(task.lastActivity) + "</td>" +
         "<td>" + formatUsd(task.totals.costUsd) + "</td>" +
         "<td>" + formatTokens(totalTokens(task.totals)) + "</td>";
@@ -219,7 +242,8 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     currentBreakdown = ref;
     const session = data.sessions.find((s) => s.sessionId === ref.sessionId);
     if (!session) return;
-    const totals = ref.kind === "session" ? session.totals : session.tasks.find((t) => t.taskId === ref.taskId).totals;
+    const subject = ref.kind === "session" ? session : session.tasks.find((t) => t.taskId === ref.taskId);
+    const totals = subject.totals;
 
     const body = document.getElementById("breakdown-body");
     body.innerHTML =
@@ -228,6 +252,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       "<div>Cache read: " + formatTokens(totals.tokensCacheRead) + " tok</div>" +
       "<div>Cache write: " + formatTokens(totals.tokensCacheWrite) + " tok</div>" +
       "<div>Koszt: " + formatUsd(totals.costUsd) + "</div>";
+    document.getElementById("breakdown-models").innerHTML = renderModelRows(subject.byModel);
 
     const crumbs = [
       { label: "Przegląd", onClick: () => renderOverview() },

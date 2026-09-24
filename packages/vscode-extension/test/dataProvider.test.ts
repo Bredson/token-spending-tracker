@@ -89,6 +89,25 @@ describe("buildDashboardData", () => {
     expect(data.sessions.find((s) => s.sessionId === "s2")?.title).toBeUndefined();
   });
 
+  it("breaks each session and task down per model, most expensive model first", () => {
+    const records = [
+      makeRecord({ id: "r1", sessionId: "s1", taskId: "t1", model: "claude-haiku-4-5", costUsd: 0.1 }),
+      makeRecord({ id: "r2", sessionId: "s1", taskId: "t1", model: "claude-sonnet-5", costUsd: 2 }),
+      makeRecord({ id: "r3", sessionId: "s1", taskId: "t2", model: "claude-sonnet-5", costUsd: 1 }),
+    ];
+    const data = buildDashboardData(records, now);
+    const s1 = data.sessions[0];
+
+    expect(s1.byModel.map((m) => m.model)).toEqual(["claude-sonnet-5", "claude-haiku-4-5"]);
+    expect(s1.byModel[0].totals.costUsd).toBe(3);
+    expect(s1.byModel[1].totals.costUsd).toBe(0.1);
+
+    const t1 = s1.tasks.find((t) => t.taskId === "t1");
+    expect(t1?.byModel.map((m) => m.model)).toEqual(["claude-sonnet-5", "claude-haiku-4-5"]);
+    const t2 = s1.tasks.find((t) => t.taskId === "t2");
+    expect(t2?.byModel).toHaveLength(1);
+  });
+
   it("passes the list of unknown (unpriced) models through, defaulting to empty", () => {
     expect(buildDashboardData([], now).unknownModels).toEqual([]);
     expect(buildDashboardData([], now, new Map(), ["mystery-model"]).unknownModels).toEqual([

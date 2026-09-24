@@ -75,6 +75,11 @@ export function aggregateBySession(records: UsageRecord[]): AggregatedGroup<stri
   return groupBy(records, (record) => record.sessionId);
 }
 
+/** Agreguje rekordy per `model` — rozbicie kosztu zadania/sesji, gdy mieszają się modele. */
+export function aggregateByModel(records: UsageRecord[]): AggregatedGroup<string>[] {
+  return groupBy(records, (record) => record.model);
+}
+
 /** Agreguje rekordy per `projectPath` — spec.md sekcja 3.2/5. */
 export function aggregateByProject(records: UsageRecord[]): AggregatedGroup<string>[] {
   return groupBy(records, (record) => record.projectPath);

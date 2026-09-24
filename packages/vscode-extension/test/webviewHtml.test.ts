@@ -39,6 +39,17 @@ describe("renderDashboardHtml", () => {
     expect(html).toMatch(/renderUnknownModels\(\)[\s\S]*escapeHtml\(model\)/);
   });
 
+  it("renders a per-model table in the breakdown view from `byModel`, escaping model ids", () => {
+    expect(html).toContain('id="breakdown-models"');
+    expect(html).toContain("function renderModelRows(byModel)");
+    expect(html).toMatch(/renderModelRows\(byModel\)[\s\S]*escapeHtml\(entry\.model\)/);
+  });
+
+  it("lists every model used by a task in the session table, not just the last one", () => {
+    expect(html).toContain("function modelsLabel(byModel)");
+    expect(html).toContain("modelsLabel(task.byModel)");
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");
