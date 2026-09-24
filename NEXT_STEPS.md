@@ -19,12 +19,9 @@ obecnej wersji — to propozycje, nie plan.
   gdy katalog z logów już nie istnieje).
 - **Tooltip status baru** — objaśnienie liczb, tytuł (lub ID) ostatnio aktywnej sesji projektu
   i lista modeli użytych dziś.
-
-## Drobne usprawnienia (szybkie do zrobienia)
-
-- **Test na realnym re-tytułowaniu w `watch()`** — obecne testy `ClaudeCodeSource` sprawdzają
-  tytuły tylko przez `loadAll()`; warto dopisać test, że tytuł zmieniony w locie (np. użytkownik
-  ręcznie nazwie sesję już po tym, jak dashboard był otwarty) trafia do kolejnego `postMessage`.
+- **Re-tytułowanie sesji w locie** — test w `watch()` wykazał, że sam wpis `custom-title` nie
+  powiadamiał silnika (dashboard odświeżał tytuł dopiero przy kolejnej odpowiedzi modelu);
+  źródło emituje teraz pustą partię jako sygnał zmiany metadanych, a silnik powiadamia słuchaczy.
 
 ## Funkcje średniej wielkości
 

@@ -35,6 +35,11 @@ export interface UsageSource {
 
   loadAll(): Promise<UsageRecord[]>;
 
+  /**
+   * Obserwuje nowe zużycie. Pusta tablica `newRecords` jest dozwolona i znaczy
+   * "zmieniły się metadane bez nowych rekordów" (np. tytuł sesji) — silnik
+   * powiadamia wtedy subskrybentów tak, jakby coś przybyło.
+   */
   watch(onUpdate: (newRecords: UsageRecord[]) => void): Disposable;
 
   /**

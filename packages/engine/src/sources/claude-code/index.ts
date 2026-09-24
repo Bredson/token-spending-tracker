@@ -72,7 +72,7 @@ export class ClaudeCodeSource implements UsageSource {
     const records: UsageRecord[] = [];
     for (const file of files) {
       const lines = await this.cursorStore.readNewLines(file);
-      records.push(...this.processLines(lines));
+      records.push(...this.processLines(lines).records);
     }
     return records;
   }
@@ -97,8 +97,9 @@ export class ClaudeCodeSource implements UsageSource {
         if (lines.length === 0) {
           return;
         }
-        const records = this.processLines(lines);
-        if (records.length > 0) {
+        const { records, titlesChanged } = this.processLines(lines);
+        // Pusta partia = "zmieniły się metadane (tytuł sesji), odśwież widok".
+        if (records.length > 0 || titlesChanged) {
           onUpdate(records);
         }
       });
@@ -141,8 +142,9 @@ export class ClaudeCodeSource implements UsageSource {
    * `model`/`usage`). Wpisy "user" są nadal przepuszczane przez grouper —
    * wyznaczają granice zadań — ale same nie tworzą rekordów.
    */
-  private processLines(lines: string[]): UsageRecord[] {
+  private processLines(lines: string[]): { records: UsageRecord[]; titlesChanged: boolean } {
     const records: UsageRecord[] = [];
+    let titlesChanged = false;
 
     for (const line of lines) {
       const titleEntry = parseSessionTitleLine(line);
@@ -154,6 +156,7 @@ export class ClaudeCodeSource implements UsageSource {
           existing.customTitle = titleEntry.title;
         }
         this.sessionTitles.set(titleEntry.sessionId, existing);
+        titlesChanged = true;
         continue;
       }
 
@@ -186,6 +189,6 @@ export class ClaudeCodeSource implements UsageSource {
       records.push(applyPricing(record, this.pricingTable, this.onUnknownModel));
     }
 
-    return records;
+    return { records, titlesChanged };
   }
 }

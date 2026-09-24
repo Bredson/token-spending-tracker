@@ -139,6 +139,20 @@ describe("Engine ingest via watch()", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it("treats an explicitly empty batch as a metadata change and notifies listeners", async () => {
+    const source = new FakeSource(true, []);
+    const engine = new Engine({ sources: [source] });
+    await engine.start();
+
+    let notifications = 0;
+    engine.onChange(() => notifications++);
+
+    source.emit([]);
+
+    expect(notifications).toBe(1);
+    expect(engine.getRecords()).toEqual([]);
+  });
+
   it("stops notifying a listener after its subscription is disposed", async () => {
     const source = new FakeSource(true, []);
     const engine = new Engine({ sources: [source] });

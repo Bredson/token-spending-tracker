@@ -128,10 +128,12 @@ export class Engine implements Disposable {
   /**
    * Dopisuje nowe rekordy do magazynu (deduplikując po `id`, na wypadek gdyby
    * to samo źródło kiedyś zwróciło ten sam rekord dwa razy) i powiadamia
-   * subskrybentów, jeśli faktycznie coś nowego przybyło.
+   * subskrybentów, jeśli faktycznie coś nowego przybyło. Jawnie pusta partia
+   * to sygnał ze źródła "zmieniły się metadane" (np. tytuł sesji) — też
+   * powiadamia, bo UI musi się przerysować mimo braku nowych rekordów.
    */
   private ingest(newRecords: UsageRecord[]): void {
-    let addedAny = false;
+    let addedAny = newRecords.length === 0;
 
     for (const record of newRecords) {
       if (this.recordIndexById.has(record.id)) {

@@ -289,4 +289,45 @@ describe("ClaudeCodeSource.watch", () => {
       disposable.dispose();
     }
   }, 8000);
+
+  it("picks up a custom-title appended while watching and signals the change with an empty batch", async () => {
+    const sessionFile = join(dir, "session-retitle.jsonl");
+    await writeFile(
+      sessionFile,
+      [
+        humanLine({ uuid: "u1", sessionId: "session-retitle" }),
+        JSON.stringify({ type: "ai-title", sessionId: "session-retitle", aiTitle: "Tytuł automatyczny" }),
+      ].join("\n") + "\n",
+    );
+
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    await source.loadAll();
+    expect(source.getSessionTitles().get("session-retitle")).toBe("Tytuł automatyczny");
+
+    const batches: UsageRecord[][] = [];
+    const disposable = source.watch((records) => {
+      batches.push(records);
+    });
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      await appendFile(
+        sessionFile,
+        JSON.stringify({ type: "custom-title", sessionId: "session-retitle", customTitle: "Nazwa ręczna" }) + "\n",
+      );
+
+      await vi.waitFor(
+        () => {
+          expect(batches).toHaveLength(1);
+        },
+        { timeout: 5000, interval: 50 },
+      );
+
+      expect(batches[0]).toEqual([]);
+      expect(source.getSessionTitles().get("session-retitle")).toBe("Nazwa ręczna");
+    } finally {
+      disposable.dispose();
+    }
+  }, 8000);
 });
