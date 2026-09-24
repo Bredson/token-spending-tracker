@@ -1,13 +1,13 @@
+import { homedir } from "node:os";
 import * as vscode from "vscode";
 import { ClaudeCodeSource, Engine } from "@token-tracker/engine";
 import { formatStatusBarText } from "./statusBar";
 import { DashboardPanel } from "./dashboard/panel";
+import { resolvePricingTable } from "./pricingConfig";
 
 let engine: Engine | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  engine = new Engine({ sources: [new ClaudeCodeSource()] });
-
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.command = "tokenTracker.openDashboard";
   statusBarItem.show();
@@ -28,12 +28,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     statusBarItem.text = formatStatusBarText(todaysProjectRecords);
   };
 
-  context.subscriptions.push(engine.onChange(updateStatusBar));
+  const startEngine = async (): Promise<void> => {
+    engine?.dispose();
+    engine = new Engine({ sources: [new ClaudeCodeSource({ pricingTable: loadConfiguredPricing() })] });
+    engine.onChange(updateStatusBar);
+    DashboardPanel.attachEngine(engine);
+    await engine.start();
+    updateStatusBar();
+  };
 
   context.subscriptions.push(
     vscode.commands.registerCommand("tokenTracker.openDashboard", () => {
       if (engine) {
         DashboardPanel.createOrShow(context, engine);
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("tokenTracker")) {
+        void startEngine();
       }
     }),
   );
@@ -44,13 +59,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
   });
 
-  await engine.start();
-  updateStatusBar();
+  await startEngine();
 }
 
 export function deactivate(): void {
   engine?.dispose();
   engine = undefined;
+}
+
+function loadConfiguredPricing() {
+  const config = vscode.workspace.getConfiguration("tokenTracker");
+  const { table, rejectedModels } = resolvePricingTable(
+    {
+      pricingFile: config.get<string>("pricingFile"),
+      pricingOverrides: config.get<unknown>("pricingOverrides"),
+    },
+    homedir(),
+  );
+  if (rejectedModels.length > 0) {
+    void vscode.window.showWarningMessage(
+      `Token Tracker: pominięto niepoprawne wpisy w tokenTracker.pricingOverrides: ${rejectedModels.join(", ")}`,
+    );
+  }
+  return table;
 }
 
 function isToday(timestampIso: string): boolean {

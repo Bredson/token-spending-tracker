@@ -12,7 +12,8 @@ export class DashboardPanel {
   private static current: DashboardPanel | undefined;
 
   private readonly panel: vscode.WebviewPanel;
-  private readonly engineSubscription: vscode.Disposable;
+  private engine: Engine;
+  private engineSubscription: vscode.Disposable;
 
   static createOrShow(context: vscode.ExtensionContext, engine: Engine): void {
     if (DashboardPanel.current) {
@@ -35,34 +36,47 @@ export class DashboardPanel {
     });
   }
 
+  /** Podmienia silnik w otwartym panelu (np. po przeładowaniu cennika z ustawień). */
+  static attachEngine(engine: Engine): void {
+    DashboardPanel.current?.attach(engine);
+  }
+
   private constructor(panel: vscode.WebviewPanel, engine: Engine) {
     this.panel = panel;
+    this.engine = engine;
     const nonce = createNonce();
     this.panel.webview.html = renderDashboardHtml({
       cspSource: this.panel.webview.cspSource,
       nonce,
     });
 
-    this.postUpdate(engine);
-    this.engineSubscription = engine.onChange(() => this.postUpdate(engine));
+    this.postUpdate();
+    this.engineSubscription = engine.onChange(() => this.postUpdate());
 
     this.panel.webview.onDidReceiveMessage((message: { type: string }) => {
       if (message.type === "ready") {
-        this.postUpdate(engine);
+        this.postUpdate();
       }
     });
 
     this.panel.onDidDispose(() => this.dispose());
   }
 
-  private postUpdate(engine: Engine): void {
+  private attach(engine: Engine): void {
+    this.engineSubscription.dispose();
+    this.engine = engine;
+    this.engineSubscription = engine.onChange(() => this.postUpdate());
+    this.postUpdate();
+  }
+
+  private postUpdate(): void {
     void this.panel.webview.postMessage({
       type: "update",
       data: buildDashboardData(
-        engine.getRecords(),
+        this.engine.getRecords(),
         new Date(),
-        engine.getSessionTitles(),
-        engine.getUnknownModels(),
+        this.engine.getSessionTitles(),
+        this.engine.getUnknownModels(),
       ),
     });
   }

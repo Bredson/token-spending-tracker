@@ -19,6 +19,23 @@ npm test        # testy wszystkich pakietów
 
 Uruchomienie wtyczki w trybie deweloperskim: otwórz repo w VS Code i naciśnij **F5** (konfiguracja `.vscode/launch.json` buduje pakiety i startuje Extension Development Host).
 
+## Konfiguracja cennika
+
+Wbudowana tabela cen (`packages/engine/src/pricing.json`, USD za 1M tokenów) rozpoznaje aktualne modele Anthropic, także w zapisie z bramek API (`anthropic/claude-sonnet-5[1m]`) i przez aliasy rodzin (`sonnet`, `opus`, `haiku`, `fable`). Modele bez ceny liczone są jako $ 0 i wypisywane w ostrzeżeniu na górze dashboardu.
+
+Cenę można nadpisać lub dodać w ustawieniach VS Code (`settings.json`):
+
+```jsonc
+// wprost w ustawieniach — ma pierwszeństwo
+"tokenTracker.pricingOverrides": {
+  "openai/gpt-6-astra": { "inputPer1M": 1.25, "outputPer1M": 10, "cacheReadPer1M": 0.125, "cacheWritePer1M": 1.25 }
+},
+// albo z osobnego pliku o tym samym formacie (`~` jest rozwijane)
+"tokenTracker.pricingFile": "~/.config/token-tracker/pricing.json"
+```
+
+Zmiana ustawień przeładowuje dane od razu, bez restartu VS Code. Niepoprawne wpisy (brak któregoś z czterech pól, wartość ujemna lub nieliczbowa) są pomijane z ostrzeżeniem.
+
 ## Pakowanie wtyczki (`.vsix`)
 
 ```bash

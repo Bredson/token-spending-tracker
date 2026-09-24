@@ -23,7 +23,32 @@
         "command": "tokenTracker.openDashboard",
         "title": "Token Tracker: Open Dashboard"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Token Tracker",
+      "properties": {
+        "tokenTracker.pricingFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Ścieżka do pliku JSON z własnym cennikiem (`~` jest rozwijane). Wpisy nadpisują wbudowaną tabelę per model. Format: `{ \"<model-id>\": { \"inputPer1M\": 2, \"outputPer1M\": 10, \"cacheReadPer1M\": 0.2, \"cacheWritePer1M\": 2.5 } }` (USD za 1M tokenów)."
+        },
+        "tokenTracker.pricingOverrides": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Cennik per model wpisany wprost w ustawieniach — ma pierwszeństwo przed `#tokenTracker.pricingFile#` i tabelą wbudowaną. Ten sam format co plik: klucz to ID modelu z logów (np. `openai/gpt-6-astra`), wartość to cztery stawki w USD za 1M tokenów.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["inputPer1M", "outputPer1M", "cacheReadPer1M", "cacheWritePer1M"],
+            "properties": {
+              "inputPer1M": { "type": "number", "minimum": 0 },
+              "outputPer1M": { "type": "number", "minimum": 0 },
+              "cacheReadPer1M": { "type": "number", "minimum": 0 },
+              "cacheWritePer1M": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
