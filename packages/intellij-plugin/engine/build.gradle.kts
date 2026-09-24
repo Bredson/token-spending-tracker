@@ -14,7 +14,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// Te same fixture'y JSONL co silnik TypeScript — jedno źródło prawdy dla obu implementacji.
+// Ten sam pricing.json i te same fixture'y JSONL co silnik TypeScript —
+// jedno źródło prawdy dla obu implementacji.
+sourceSets.main {
+    resources.srcDir("../../engine/src").include("pricing.json")
+}
 sourceSets.test {
     resources.srcDir("../../engine/test/fixtures")
 }
