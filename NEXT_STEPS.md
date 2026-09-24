@@ -17,11 +17,11 @@ obecnej wersji — to propozycje, nie plan.
   z licznikiem "N / M"; filtr zostaje aktywny przy odświeżeniu danych.
 - **Przycisk "Otwórz projekt w nowym oknie"** w widoku sesji (`vscode.openFolder`, z ostrzeżeniem,
   gdy katalog z logów już nie istnieje).
+- **Tooltip status baru** — objaśnienie liczb, tytuł (lub ID) ostatnio aktywnej sesji projektu
+  i lista modeli użytych dziś.
 
 ## Drobne usprawnienia (szybkie do zrobienia)
 
-- **Ikona/status w status barze reagujący na tytuł sesji** — obecnie status bar pokazuje tylko
-  koszt/tokeny bieżącego projektu; mógłby też pokazywać tytuł aktywnej sesji w tooltipie.
 - **Test na realnym re-tytułowaniu w `watch()`** — obecne testy `ClaudeCodeSource` sprawdzają
   tytuły tylko przez `loadAll()`; warto dopisać test, że tytuł zmieniony w locie (np. użytkownik
   ręcznie nazwie sesję już po tym, jak dashboard był otwarty) trafia do kolejnego `postMessage`.

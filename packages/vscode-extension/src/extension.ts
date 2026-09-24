@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import * as vscode from "vscode";
 import { ClaudeCodeSource, Engine } from "@token-tracker/engine";
-import { formatStatusBarText } from "./statusBar";
+import { formatStatusBarText, formatStatusBarTooltip } from "./statusBar";
 import { DashboardPanel } from "./dashboard/panel";
 import { resolvePricingTable } from "./pricingConfig";
 
@@ -26,6 +26,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         (record) => workspaceFolderPaths.includes(record.projectPath) && isToday(record.timestamp),
       );
     statusBarItem.text = formatStatusBarText(todaysProjectRecords);
+    statusBarItem.tooltip = formatStatusBarTooltip(todaysProjectRecords, engine.getSessionTitles());
   };
 
   const startEngine = async (): Promise<void> => {

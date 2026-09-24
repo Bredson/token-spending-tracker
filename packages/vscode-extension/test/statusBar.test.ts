@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatStatusBarText } from "../src/statusBar";
+import { formatStatusBarText, formatStatusBarTooltip } from "../src/statusBar";
 import type { UsageRecord } from "@token-tracker/engine";
 
 function makeRecord(overrides: Partial<UsageRecord> = {}): UsageRecord {
@@ -36,5 +36,42 @@ describe("formatStatusBarText", () => {
   it("abbreviates token counts >= 1000 as Nk", () => {
     const records = [makeRecord({ costUsd: 0.42, tokensInput: 12300 })];
     expect(formatStatusBarText(records)).toBe("$ 0.42 · 12.3k tok");
+  });
+});
+
+describe("formatStatusBarTooltip", () => {
+  it("explains the numbers and says there is no session yet when there are no records", () => {
+    const tooltip = formatStatusBarTooltip([], new Map());
+    expect(tooltip).toContain("Token Tracker");
+    expect(tooltip).toContain("dziś");
+    expect(tooltip).toContain("brak sesji");
+  });
+
+  it("names the most recently active session by its title, with the id alongside", () => {
+    const records = [
+      makeRecord({ id: "r1", sessionId: "old-1", timestamp: "2026-01-01T08:00:00.000Z" }),
+      makeRecord({ id: "r2", sessionId: "new-2", timestamp: "2026-01-01T09:00:00.000Z" }),
+    ];
+    const tooltip = formatStatusBarTooltip(records, new Map([["new-2", "Naprawa cennika"]]));
+    expect(tooltip).toContain("Naprawa cennika");
+    expect(tooltip).toContain("new-2");
+    expect(tooltip).not.toContain("old-1");
+  });
+
+  it("falls back to the session id when no title is known", () => {
+    const records = [makeRecord({ sessionId: "sess-x" })];
+    expect(formatStatusBarTooltip(records, new Map())).toContain("sess-x");
+  });
+
+  it("lists the models used today", () => {
+    const records = [
+      makeRecord({ id: "r1", model: "claude-sonnet-5" }),
+      makeRecord({ id: "r2", model: "claude-haiku-4-5" }),
+      makeRecord({ id: "r3", model: "claude-sonnet-5" }),
+    ];
+    const tooltip = formatStatusBarTooltip(records, new Map());
+    expect(tooltip).toContain("claude-sonnet-5");
+    expect(tooltip).toContain("claude-haiku-4-5");
+    expect(tooltip.match(/claude-sonnet-5/g)).toHaveLength(1);
   });
 });

@@ -17,6 +17,33 @@ export function formatStatusBarText(records: UsageRecord[]): string {
   return `$ ${costUsd.toFixed(2)} · ${formatTokenCount(tokens)} tok`;
 }
 
+/**
+ * Tooltip status bara: co znaczą liczby, która sesja jest aktywna (ostatnio
+ * aktywna w dzisiejszych rekordach projektu) i jakie modele były dziś użyte.
+ */
+export function formatStatusBarTooltip(
+  records: UsageRecord[],
+  sessionTitles: Map<string, string>,
+): string {
+  const lines = [`Token Tracker — koszt i tokeny Claude Code w tym projekcie dziś: ${formatStatusBarText(records)}`];
+
+  const latest = records.reduce<UsageRecord | undefined>(
+    (best, record) => (best === undefined || record.timestamp > best.timestamp ? record : best),
+    undefined,
+  );
+  if (latest === undefined) {
+    lines.push("Aktywna sesja: brak sesji dziś");
+  } else {
+    const title = sessionTitles.get(latest.sessionId);
+    lines.push(`Aktywna sesja: ${title ? `${title} (${latest.sessionId})` : latest.sessionId}`);
+    const models = [...new Set(records.map((record) => record.model))].sort();
+    lines.push(`Modele dziś: ${models.join(", ")}`);
+  }
+
+  lines.push("Kliknij, aby otworzyć dashboard.");
+  return lines.join("\n");
+}
+
 function formatTokenCount(tokens: number): string {
   if (tokens < 1000) {
     return String(tokens);
