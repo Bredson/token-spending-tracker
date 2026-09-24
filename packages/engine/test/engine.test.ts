@@ -59,6 +59,26 @@ class FakeSource implements UsageSource {
   }
 
   titles: Map<string, string> | undefined;
+
+  getUnknownModels(): string[] {
+    return this.unknownModels ?? [];
+  }
+
+  unknownModels: string[] | undefined;
+}
+
+class MinimalSource implements UsageSource {
+  readonly id = "minimal";
+  readonly displayName = "Minimal source";
+  async detect(): Promise<boolean> {
+    return true;
+  }
+  async loadAll(): Promise<UsageRecord[]> {
+    return [];
+  }
+  watch(): Disposable {
+    return { dispose: () => {} };
+  }
 }
 
 describe("Engine.start", () => {
@@ -185,6 +205,24 @@ describe("Engine.getSessionTitles", () => {
     await engine.start();
 
     expect(engine.getSessionTitles().get("session-1")).toBe("Drugi tytuł");
+  });
+});
+
+describe("Engine.getUnknownModels", () => {
+  it("returns an empty list when no source implements getUnknownModels", async () => {
+    const engine = new Engine({ sources: [new MinimalSource()] });
+    await engine.start();
+    expect(engine.getUnknownModels()).toEqual([]);
+  });
+
+  it("merges and deduplicates unknown models across sources, sorted", async () => {
+    const first = new FakeSource(true, []);
+    first.unknownModels = ["zeta", "alpha"];
+    const second = new FakeSource(true, []);
+    second.unknownModels = ["alpha", "mid"];
+    const engine = new Engine({ sources: [first, second] });
+    await engine.start();
+    expect(engine.getUnknownModels()).toEqual(["alpha", "mid", "zeta"]);
   });
 });
 

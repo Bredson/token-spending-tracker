@@ -2,7 +2,12 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyPricing, loadPricingTable, type PricingTable } from "../src/pricing";
+import {
+  applyPricing,
+  loadPricingTable,
+  normalizeModelId,
+  type PricingTable,
+} from "../src/pricing";
 import type { UsageRecord } from "../src/types";
 
 function makeRecord(overrides: Partial<UsageRecord> = {}): UsageRecord {
@@ -137,4 +142,63 @@ describe("applyPricing", () => {
     applyPricing(record, table, (model) => seen.push(model));
     expect(seen).toEqual([]);
   });
+
+  it("prices a gateway-style id `anthropic/<model>[1m]` as the bare model", () => {
+    const record = makeRecord({ model: "anthropic/claude-sonnet-5[1m]" });
+    const seen: string[] = [];
+    const priced = applyPricing(record, table, (model) => seen.push(model));
+    expect(priced.costUsd).toBeCloseTo(14.7, 6);
+    expect(seen).toEqual([]);
+  });
+
+  it("prices the bare `<synthetic>` model at 0 without reporting it as unknown", () => {
+    const record = makeRecord({ model: "<synthetic>" });
+    const seen: string[] = [];
+    expect(applyPricing(record, table, (model) => seen.push(model)).costUsd).toBe(0);
+    expect(seen).toEqual([]);
+  });
+
+  it("keeps `model` on the returned record untouched (only the lookup is normalized)", () => {
+    const record = makeRecord({ model: "anthropic/claude-sonnet-5[1m]" });
+    expect(applyPricing(record, table).model).toBe("anthropic/claude-sonnet-5[1m]");
+  });
+});
+
+describe("normalizeModelId", () => {
+  it("strips the `anthropic/` provider prefix", () => {
+    expect(normalizeModelId("anthropic/claude-opus-5")).toBe("claude-opus-5");
+  });
+
+  it("strips the `[1m]` context-window suffix", () => {
+    expect(normalizeModelId("claude-sonnet-5[1m]")).toBe("claude-sonnet-5");
+  });
+
+  it("maps bare family aliases used by Claude Code to a concrete current model", () => {
+    expect(normalizeModelId("sonnet")).toBe("claude-sonnet-5");
+    expect(normalizeModelId("opus")).toBe("claude-opus-5");
+    expect(normalizeModelId("haiku")).toBe("claude-haiku-4-5");
+    expect(normalizeModelId("fable")).toBe("claude-fable-5-1");
+  });
+
+  it("leaves an already-canonical id unchanged", () => {
+    expect(normalizeModelId("claude-haiku-4-5-20251001")).toBe("claude-haiku-4-5-20251001");
+  });
+
+  it("leaves a non-Anthropic id like `openai/gpt-6-astra` unchanged", () => {
+    expect(normalizeModelId("openai/gpt-6-astra")).toBe("openai/gpt-6-astra");
+  });
+});
+
+describe("applyPricing with the bundled table and real-world model ids", () => {
+  const table = loadPricingTable();
+
+  it.each(["sonnet", "opus", "haiku", "fable", "anthropic/claude-fable-5-1[1m]"])(
+    "prices %s above zero without reporting it as unknown",
+    (model) => {
+      const seen: string[] = [];
+      const priced = applyPricing(makeRecord({ model }), table, (m) => seen.push(m));
+      expect(priced.costUsd).toBeGreaterThan(0);
+      expect(seen).toEqual([]);
+    },
+  );
 });

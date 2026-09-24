@@ -44,4 +44,10 @@ export interface UsageSource {
    * po prostu nie implementują tej metody.
    */
   getSessionTitles?(): Map<string, string>;
+
+  /**
+   * Opcjonalne: ID modeli napotkanych w logach, których nie było w tabeli cen
+   * (rekordy z `costUsd = 0`). Pozwala UI ostrzec, że suma jest niedoszacowana.
+   */
+  getUnknownModels?(): string[];
 }

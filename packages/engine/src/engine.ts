@@ -105,6 +105,17 @@ export class Engine implements Disposable {
     return merged;
   }
 
+  /** Nieznane (niewycenione) modele ze wszystkich źródeł — bez duplikatów, posortowane. */
+  getUnknownModels(): string[] {
+    const merged = new Set<string>();
+    for (const source of this.sources) {
+      for (const model of source.getUnknownModels?.() ?? []) {
+        merged.add(model);
+      }
+    }
+    return [...merged].sort();
+  }
+
   /** Zatrzymuje wszystkie obserwatory źródeł. */
   dispose(): void {
     for (const disposable of this.watchDisposables) {

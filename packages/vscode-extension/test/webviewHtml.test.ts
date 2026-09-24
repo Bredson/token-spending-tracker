@@ -32,6 +32,13 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain("sessionLabel(session)");
   });
 
+  it("has a warning banner for unknown models, rendered from data.unknownModels with HTML escaping", () => {
+    expect(html).toContain('id="unknown-models"');
+    expect(html).toContain("function renderUnknownModels()");
+    expect(html).toContain("data.unknownModels");
+    expect(html).toMatch(/renderUnknownModels\(\)[\s\S]*escapeHtml\(model\)/);
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");

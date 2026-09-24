@@ -35,7 +35,7 @@ export class ClaudeCodeSource implements UsageSource {
   private readonly projectsDir: string;
   private readonly pricingTable: PricingTable;
   private readonly onUnknownModel: (model: string) => void;
-  private readonly warnedModels = new Set<string>();
+  private readonly unknownModels = new Set<string>();
   private readonly cursorStore = new FileCursorStore();
   private readonly grouper = new TaskGrouper();
   private readonly sessionTitles = new Map<string, { aiTitle?: string; customTitle?: string }>();
@@ -43,17 +43,20 @@ export class ClaudeCodeSource implements UsageSource {
   constructor(options: ClaudeCodeSourceOptions = {}) {
     this.projectsDir = options.projectsDir ?? join(homedir(), ".claude", "projects");
     this.pricingTable = options.pricingTable ?? loadPricingTable();
-    this.onUnknownModel =
+    const notify =
       options.onUnknownModel ??
-      ((model) => {
-        if (this.warnedModels.has(model)) {
-          return;
-        }
-        this.warnedModels.add(model);
+      ((model: string) => {
         console.warn(
           `[token-tracker] Nieznany model "${model}" — koszt nieprzeliczony (costUsd = 0).`,
         );
       });
+    this.onUnknownModel = (model) => {
+      if (this.unknownModels.has(model)) {
+        return;
+      }
+      this.unknownModels.add(model);
+      notify(model);
+    };
   }
 
   async detect(): Promise<boolean> {
@@ -125,6 +128,10 @@ export class ClaudeCodeSource implements UsageSource {
       }
     }
     return resolved;
+  }
+
+  getUnknownModels(): string[] {
+    return [...this.unknownModels].sort();
   }
 
   /**

@@ -89,6 +89,13 @@ describe("buildDashboardData", () => {
     expect(data.sessions.find((s) => s.sessionId === "s2")?.title).toBeUndefined();
   });
 
+  it("passes the list of unknown (unpriced) models through, defaulting to empty", () => {
+    expect(buildDashboardData([], now).unknownModels).toEqual([]);
+    expect(buildDashboardData([], now, new Map(), ["mystery-model"]).unknownModels).toEqual([
+      "mystery-model",
+    ]);
+  });
+
   it("returns empty sessions and zero totals for no records", () => {
     const data = buildDashboardData([], now);
     expect(data.sessions).toEqual([]);

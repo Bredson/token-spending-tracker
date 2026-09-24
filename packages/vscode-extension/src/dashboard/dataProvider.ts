@@ -41,6 +41,8 @@ export interface DashboardData {
   generatedAt: string;
   overview: DashboardOverview;
   sessions: SessionSummary[];
+  /** Modele bez ceny w tabeli — ich rekordy mają `costUsd = 0`, więc sumy są niedoszacowane. */
+  unknownModels: string[];
 }
 
 const DAILY_SERIES_LENGTH = 30;
@@ -53,6 +55,7 @@ export function buildDashboardData(
   records: UsageRecord[],
   now: Date = new Date(),
   sessionTitles: Map<string, string> = new Map(),
+  unknownModels: string[] = [],
 ): DashboardData {
   const todayKey = periodKey(now.toISOString(), "day");
   const weekKey = periodKey(now.toISOString(), "week");
@@ -71,6 +74,7 @@ export function buildDashboardData(
       dailyCostSeries: buildDailyCostSeries(records, now),
     },
     sessions: buildSessionSummaries(records, sessionTitles),
+    unknownModels,
   };
 }
 

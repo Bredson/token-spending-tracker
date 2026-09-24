@@ -130,6 +130,32 @@ describe("ClaudeCodeSource.loadAll", () => {
   });
 });
 
+describe("ClaudeCodeSource.getUnknownModels", () => {
+  it("returns an empty list when every model was priced", async () => {
+    await writeFile(
+      join(dir, "s.jsonl"),
+      assistantLine({ uuid: "a1", sessionId: "s", model: "claude-sonnet-5", inputTokens: 1, outputTokens: 1 }) + "\n",
+    );
+    const source = new ClaudeCodeSource({ projectsDir: dir });
+    await source.loadAll();
+    expect(source.getUnknownModels()).toEqual([]);
+  });
+
+  it("lists each unpriced model once, sorted, even when a custom onUnknownModel callback is given", async () => {
+    await writeFile(
+      join(dir, "s.jsonl"),
+      [
+        assistantLine({ uuid: "a1", sessionId: "s", model: "zeta-model", inputTokens: 1, outputTokens: 1 }),
+        assistantLine({ uuid: "a2", sessionId: "s", model: "alpha-model", inputTokens: 1, outputTokens: 1 }),
+        assistantLine({ uuid: "a3", sessionId: "s", model: "zeta-model", inputTokens: 1, outputTokens: 1 }),
+      ].join("\n") + "\n",
+    );
+    const source = new ClaudeCodeSource({ projectsDir: dir, onUnknownModel: () => {} });
+    await source.loadAll();
+    expect(source.getUnknownModels()).toEqual(["alpha-model", "zeta-model"]);
+  });
+});
+
 describe("ClaudeCodeSource.getSessionTitles", () => {
   it("returns nothing when no title entries were ever seen", async () => {
     const sessionFile = join(dir, "session-notitle.jsonl");

@@ -20,6 +20,36 @@ export type PricingTable = Record<string, ModelPricing>;
 // o TTL 5 minut: cache write = 1.25x cena input, cache read = 0.1x cena input.
 const defaultPricingTable = bundledPricingTable as PricingTable;
 
+// Claude Code zapisuje ten pseudo-model dla komunikatów generowanych lokalnie
+// (bez wywołania API) — zerowy koszt jest tu poprawny, nie "nieznany".
+const SYNTHETIC_MODEL = "<synthetic>";
+
+// Claude Code zapisuje samą nazwę rodziny, gdy użytkownik wybrał model aliasem
+// (`/model sonnet`). Alias wskazuje aktualnie najnowszy model danej rodziny.
+const MODEL_FAMILY_ALIASES: Record<string, string> = {
+  sonnet: "claude-sonnet-5",
+  opus: "claude-opus-5",
+  haiku: "claude-haiku-4-5",
+  fable: "claude-fable-5-1",
+};
+
+/**
+ * Sprowadza ID modelu z logów do klucza tabeli cen: zdejmuje prefix dostawcy
+ * `anthropic/` i sufiks okna kontekstu `[1m]` (oba dodawane przez bramki
+ * API / `/model anthropic/...[1m]`), rozwiązuje aliasy rodzin. ID innych
+ * dostawców (np. `openai/...`) zwraca bez zmian.
+ */
+export function normalizeModelId(model: string): string {
+  let id = model;
+  if (id.startsWith("anthropic/")) {
+    id = id.slice("anthropic/".length);
+  }
+  if (id.endsWith("[1m]")) {
+    id = id.slice(0, -"[1m]".length);
+  }
+  return MODEL_FAMILY_ALIASES[id] ?? id;
+}
+
 /**
  * Wylicza `costUsd` dla rekordu na podstawie tabeli cen i zwraca nową kopię
  * rekordu z ustawionym polem. Nigdy nie rzuca wyjątku: dla nieznanego modelu
@@ -31,7 +61,11 @@ export function applyPricing(
   table: PricingTable,
   onUnknownModel?: (model: string) => void,
 ): UsageRecord {
-  const pricing = table[record.model];
+  if (record.model === SYNTHETIC_MODEL) {
+    return { ...record, costUsd: 0 };
+  }
+
+  const pricing = table[record.model] ?? table[normalizeModelId(record.model)];
   if (!pricing) {
     onUnknownModel?.(record.model);
     return { ...record, costUsd: 0 };

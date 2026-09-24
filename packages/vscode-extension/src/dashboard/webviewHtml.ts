@@ -36,10 +36,14 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
   .view { display: none; }
   .view.active { display: block; }
   .empty { opacity: 0.7; }
+  .warning { display: none; border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); background: var(--vscode-inputValidation-warningBackground, rgba(204,167,0,0.12)); padding: 8px 12px; margin-bottom: 12px; font-size: 0.9em; }
+  .warning.active { display: block; }
+  .warning code { font-family: var(--vscode-editor-font-family, monospace); }
 </style>
 </head>
 <body>
   <div class="crumbs" id="crumbs"></div>
+  <div class="warning" id="unknown-models"></div>
 
   <section id="view-overview" class="view">
     <h1>Przegląd</h1>
@@ -131,6 +135,17 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       btn.addEventListener("click", part.onClick);
       crumbs.appendChild(btn);
     });
+  }
+
+  function renderUnknownModels() {
+    const el = document.getElementById("unknown-models");
+    const models = (data && data.unknownModels) || [];
+    el.classList.toggle("active", models.length > 0);
+    el.innerHTML = models.length === 0
+      ? ""
+      : "Brak ceny dla modeli: " +
+        models.map((model) => "<code>" + escapeHtml(model) + "</code>").join(", ") +
+        " — ich koszt liczony jest jako $ 0, więc sumy są niedoszacowane.";
   }
 
   function renderOverview() {
@@ -229,6 +244,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     const message = event.data;
     if (message.type === "update") {
       data = message.data;
+      renderUnknownModels();
       renderOverview();
     }
   });
