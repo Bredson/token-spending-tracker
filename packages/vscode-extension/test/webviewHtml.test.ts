@@ -56,6 +56,14 @@ describe("renderDashboardHtml", () => {
     expect(html).toContain('colspan="5"');
   });
 
+  it("has a session filter box that matches on title, session id and model, case-insensitively", () => {
+    expect(html).toContain('id="session-filter"');
+    expect(html).toContain("function matchesFilter(session, query)");
+    expect(html).toMatch(/matchesFilter\(session, query\)[\s\S]*toLowerCase\(\)/);
+    expect(html).toMatch(/matchesFilter\(session, query\)[\s\S]*session\.title[\s\S]*session\.sessionId[\s\S]*byModel/);
+    expect(html).toContain('addEventListener("input"');
+  });
+
   it("only reads data via postMessage, never fetch/XHR", () => {
     expect(html).not.toContain("fetch(");
     expect(html).not.toContain("XMLHttpRequest");

@@ -12,12 +12,12 @@ obecnej wersji — to propozycje, nie plan.
   zamiast być cicho liczone jako $ 0.
 - **Konfigurowalny cennik przez ustawienia VS Code** — `tokenTracker.pricingFile` i
   `tokenTracker.pricingOverrides`, przeładowanie na żywo (patrz README).
-- **Rozbicie kosztów per model** w widoku "Rozbicie tokenów" i lista modeli per zadanie.
+- **Rozbicie kosztów per model** w widoku "Rozbicie tokenów" i lista modeli per zadanie/sesję.
+- **Filtrowanie sesji** — pole nad tabelą sesji (tytuł, ID, model; bez rozróżniania wielkości liter),
+  z licznikiem "N / M"; filtr zostaje aktywny przy odświeżeniu danych.
 
 ## Drobne usprawnienia (szybkie do zrobienia)
 
-- **Filtrowanie/szukanie sesji na liście** — przy dłuższej historii lista sesji w dashboardzie
-  może się wydłużyć; proste pole wyszukiwania po tytule/ID rozwiązałoby to bez zmiany architektury.
 - **Link "otwórz projekt"** przy sesji — `projectPath` już jest w danych, brakuje tylko akcji
   (np. `vscode.commands.executeCommand("vscode.openFolder", ...)`) w panelu.
 - **Ikona/status w status barze reagujący na tytuł sesji** — obecnie status bar pokazuje tylko

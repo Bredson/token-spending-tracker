@@ -39,6 +39,10 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
   .warning { display: none; border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); background: var(--vscode-inputValidation-warningBackground, rgba(204,167,0,0.12)); padding: 8px 12px; margin-bottom: 12px; font-size: 0.9em; }
   .warning.active { display: block; }
   .warning code { font-family: var(--vscode-editor-font-family, monospace); }
+  .filter { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+  .filter input { flex: 1; max-width: 360px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 4px 6px; font: inherit; }
+  .filter input:focus { outline: 1px solid var(--vscode-focusBorder); }
+  .filter .count { opacity: 0.7; font-size: 0.85em; }
 </style>
 </head>
 <body>
@@ -54,6 +58,10 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     </div>
     <div class="series" id="overview-series"></div>
     <h2>Sesje</h2>
+    <div class="filter">
+      <input type="search" id="session-filter" placeholder="Filtruj: tytuł, ID sesji, model" />
+      <span class="count" id="session-filter-count"></span>
+    </div>
     <table>
       <thead><tr><th>Sesja</th><th>Model</th><th>Ostatnia aktywność</th><th>Koszt</th><th>Tokeny</th></tr></thead>
       <tbody id="sessions-body"></tbody>
@@ -107,6 +115,16 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     return session.title
       ? escapeHtml(session.title) + '<span class="session-id">' + escapeHtml(session.sessionId) + "</span>"
       : escapeHtml(session.sessionId);
+  }
+
+  function matchesFilter(session, query) {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return (
+      (session.title || "").toLowerCase().includes(q) ||
+      session.sessionId.toLowerCase().includes(q) ||
+      session.byModel.some((entry) => entry.model.toLowerCase().includes(q))
+    );
   }
 
   function modelsLabel(byModel) {
@@ -188,14 +206,25 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       seriesEl.appendChild(bar);
     }
 
+    renderSessionsTable();
+    renderCrumbs([{ label: "Przegląd", onClick: () => showView("overview") }]);
+    showView("overview");
+  }
+
+  function renderSessionsTable() {
+    const query = document.getElementById("session-filter").value.trim();
+    const visible = data.sessions.filter((session) => matchesFilter(session, query));
+    document.getElementById("session-filter-count").textContent =
+      query ? visible.length + " / " + data.sessions.length : "";
+
     const sessionsBody = document.getElementById("sessions-body");
     sessionsBody.innerHTML = "";
-    if (data.sessions.length === 0) {
+    if (visible.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = '<td colspan="5" class="empty">Brak danych</td>';
+      row.innerHTML = '<td colspan="5" class="empty">' + (query ? "Brak sesji pasujących do filtra" : "Brak danych") + "</td>";
       sessionsBody.appendChild(row);
     }
-    for (const session of data.sessions) {
+    for (const session of visible) {
       const row = document.createElement("tr");
       row.className = "clickable";
       row.innerHTML =
@@ -207,10 +236,11 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
       row.addEventListener("click", () => openSession(session.sessionId));
       sessionsBody.appendChild(row);
     }
-
-    renderCrumbs([{ label: "Przegląd", onClick: () => showView("overview") }]);
-    showView("overview");
   }
+
+  document.getElementById("session-filter").addEventListener("input", () => {
+    if (data) renderSessionsTable();
+  });
 
   function openSession(sessionId) {
     currentSessionId = sessionId;
