@@ -72,6 +72,7 @@
     "build": "npm run typecheck && npm run bundle",
     "watch": "npm run bundle -- --watch",
     "test": "vitest run",
+    "export:html": "node scripts/exportDashboardHtml.ts",
     "package": "npm run build && cp ../../LICENSE ./LICENSE && vsce package --no-dependencies -o dist/token-tracker.vsix",
     "publish": "npm run build && cp ../../LICENSE ./LICENSE && vsce publish --no-dependencies"
   },

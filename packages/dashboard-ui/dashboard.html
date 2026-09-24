@@ -1,25 +1,8 @@
-export interface RenderDashboardHtmlOptions {
-  cspSource: string;
-  nonce: string;
-}
-
-/** Wartości do statycznego eksportu (`packages/dashboard-ui/dashboard.html`); host IntelliJ podstawia swoje. */
-export const DASHBOARD_HTML_PLACEHOLDERS: RenderDashboardHtmlOptions = {
-  cspSource: "__CSP_SOURCE__",
-  nonce: "__NONCE__",
-};
-
-/**
- * Czysta funkcja: zwraca cały HTML panelu (bez frameworka, brak requestów sieciowych).
- * Webview tylko przełącza widoki i renderuje sumy dostarczone przez `postMessage` —
- * żadna agregacja nie dzieje się tutaj (spec.md 6.3).
- */
-export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOptions): string {
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${cspSource};" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src __CSP_SOURCE__ 'unsafe-inline'; script-src 'nonce-__NONCE__'; img-src __CSP_SOURCE__;" />
 <title>Token Tracker</title>
 <style>
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 0 16px 16px; }
@@ -97,7 +80,7 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
     </table>
   </section>
 
-<script nonce="${nonce}">
+<script nonce="__NONCE__">
 (function () {
   // Ten sam HTML służy webview VS Code i JCEF w IntelliJ; różni się tylko most do hosta.
   const host = typeof acquireVsCodeApi === "function"
@@ -339,5 +322,4 @@ export function renderDashboardHtml({ cspSource, nonce }: RenderDashboardHtmlOpt
 })();
 </script>
 </body>
-</html>`;
-}
+</html>
