@@ -4,4 +4,4 @@ plugins {
 
 rootProject.name = "token-tracker-intellij"
 
-include("engine")
+include("engine", "plugin")

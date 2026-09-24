@@ -8,4 +8,5 @@ packages/vscode-extension/LICENSE
 .gradle/
 build/
 .kotlin/
+.intellijPlatform/
 *.iml

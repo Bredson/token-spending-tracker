@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>dev.bredson.tokentracker</id>
+    <name>Token Tracker</name>
+    <vendor url="https://github.com/Bredson/token-spending-tracker">Bredson</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <statusBarWidgetFactory
+            id="TokenTrackerStatusBar"
+            implementation="dev.bredson.tokentracker.plugin.TokenTrackerStatusBarWidgetFactory"
+            order="first" />
+        <toolWindow
+            id="Token Tracker"
+            anchor="right"
+            factoryClass="dev.bredson.tokentracker.plugin.DashboardToolWindowFactory"
+            icon="AllIcons.Actions.ShowAsTree" />
+        <applicationConfigurable
+            parentId="tools"
+            instance="dev.bredson.tokentracker.plugin.settings.TokenTrackerConfigurable"
+            id="dev.bredson.tokentracker.settings"
+            displayName="Token Tracker" />
+    </extensions>
+</idea-plugin>

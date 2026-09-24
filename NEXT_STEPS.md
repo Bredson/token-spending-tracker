@@ -1,9 +1,28 @@
 # Token Tracker — możliwe kolejne kroki
 
-Stan na 2026-09-24: MVP jest kompletne, przetestowane (110 testów) i działa u użytkownika jako
-zainstalowany `.vsix`. Poniżej lista kierunków rozwoju — nieuszeregowana sztywno, ale pogrupowana
-od najmniejszego wysiłku do największego. Żaden z tych punktów nie jest wymagany do działania
-obecnej wersji — to propozycje, nie plan.
+Stan na 2026-09-24: MVP dla VS Code jest kompletne, przetestowane (110 testów) i działa u użytkownika
+jako zainstalowany `.vsix`. Doszedł do tego plugin IntelliJ (patrz niżej) — silnik przepisany na
+Kotlin, przetestowany (91 testów) i zweryfikowany uruchomieniem w sandboxie IDE. Poniżej lista
+kierunków rozwoju — nieuszeregowana sztywno, ale pogrupowana od najmniejszego wysiłku do
+największego. Żaden z tych punktów nie jest wymagany do działania obecnej wersji — to propozycje,
+nie plan.
+
+## Plugin IntelliJ (zrobiony 2026-09-24)
+
+- Silnik (`packages/engine`) przepisany na Kotlin w `packages/intellij-plugin/engine`: typy,
+  parser Claude Code (linie, kursory plików, tytuły sesji, grupowanie zadań), agregacja i cennik
+  (łącznie z normalizacją ID modeli i `PricingConfig`) — 1:1 z logiką TypeScriptową, 91 testów.
+- Moduł `packages/intellij-plugin/plugin`: `TokenTrackerService` (jeden silnik na całe IDE, bo logi
+  Claude Code są globalne), widget w pasku stanu (`StatusBarText` reużyty z silnika), okno
+  narzędziowe z dashboardem renderowanym w JCEF — ten sam `dashboard.html` co webview VS Code, most
+  JS przez `JBCefJSQuery`/`postMessage`, oraz strona ustawień (`pricingFile`/`pricingOverrides`,
+  analogicznie do VS Code).
+- Zweryfikowane uruchomieniem `runIde` w sandboxie: plugin ładuje się bez wyjątków
+  ("Loaded custom plugins: Token Tracker (0.1.0)"), `verifyPluginStructure` i
+  `verifyPluginProjectConfiguration` przechodzą.
+- Otwarte przed publikacją: brak własnej ikony/opisu na JetBrains Marketplace, brak testów modułu
+  `plugin` (tylko `engine` ma testy — UI/serwis nie są jeszcze pokryte), nieprzetestowane na realnych
+  logach użytkownika wewnątrz pełnego IDE (tylko sandbox).
 
 ## Zrobione po 2026-09-18
 
@@ -46,9 +65,6 @@ obecnej wersji — to propozycje, nie plan.
   (`packages/engine/src/types.ts`) już to przewiduje; wymaga tylko nowego parsera per źródło,
   analogicznie do `ClaudeCodeSource`. `getSessionTitles?()` jest już opcjonalne w interfejsie,
   więc źródła bez własnych tytułów sesji nie muszą nic implementować.
-- **Plugin IntelliJ** — silnik (`packages/engine`) jest celowo niezależny od `vscode`, więc dałoby
-  się go reużyć w JVM-owym środowisku przez most (np. proces Node wywoływany z pluginu, albo
-  przepisanie silnika na Kotlin — do rozstrzygnięcia, jeśli temat będzie aktualny).
 - **Telemetria/synchronizacja w chmurze** — świadomie poza zakresem MVP (spec.md, sekcja 7);
   jeśli kiedyś potrzebna, wymagałaby osobnej decyzji o prywatności (dziś wtyczka nie robi żadnych
   wywołań sieciowych — to jedna z twardych właściwości obecnego designu, do świadomego złamania
