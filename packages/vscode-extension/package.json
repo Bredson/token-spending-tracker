@@ -5,8 +5,24 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "publisher": "token-tracker-local",
+  "publisher": "bredson",
   "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bredson/token-spending-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Bredson/token-spending-tracker/issues"
+  },
+  "homepage": "https://github.com/Bredson/token-spending-tracker#readme",
+  "keywords": [
+    "claude",
+    "claude code",
+    "tokens",
+    "cost",
+    "usage",
+    "anthropic"
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -56,7 +72,8 @@
     "build": "npm run typecheck && npm run bundle",
     "watch": "npm run bundle -- --watch",
     "test": "vitest run",
-    "package": "npm run build && cp ../../LICENSE ./LICENSE && vsce package --no-dependencies --allow-missing-repository -o dist/token-tracker.vsix"
+    "package": "npm run build && cp ../../LICENSE ./LICENSE && vsce package --no-dependencies -o dist/token-tracker.vsix",
+    "publish": "npm run build && cp ../../LICENSE ./LICENSE && vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@token-tracker/engine": "^0.1.0",
