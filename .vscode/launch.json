@@ -5,7 +5,11 @@
       "name": "Run Extension (Token Tracker)",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension"],
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension",
+        // Zainstalowana wersja sprzed zmiany publishera rejestruje te same ustawienia i komendy.
+        "--disable-extension=token-tracker-local.token-tracker-vscode"
+      ],
       "outFiles": ["${workspaceFolder}/packages/vscode-extension/dist/**/*.js"],
       "preLaunchTask": "Build all packages",
       "sourceMaps": true
