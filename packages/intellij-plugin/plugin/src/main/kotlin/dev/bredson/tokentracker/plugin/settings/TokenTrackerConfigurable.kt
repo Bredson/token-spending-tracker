@@ -46,7 +46,9 @@ class TokenTrackerConfigurable : Configurable {
                 table.editCellAt(row, PricingTableModel.MODEL)
             }
             .setRemoveAction { table.selectedRow.takeIf { it >= 0 }?.let(model::remove) }
-            .setRemoveActionUpdater { table.selectedRow >= 0 && model.row(table.selectedRow).isCustom }
+            .setRemoveActionUpdater {
+                table.selectedRow >= 0 && model.row(table.selectedRow).let { it.isCustom && !it.isUnpriced }
+            }
             .addExtraAction(object : DumbAwareAction("Przywróć cenę domyślną", null, AllIcons.Actions.Rollback) {
                 override fun actionPerformed(e: AnActionEvent) {
                     table.selectedRow.takeIf { it >= 0 }?.let(model::resetToDefault)
@@ -66,8 +68,8 @@ class TokenTrackerConfigurable : Configurable {
             .addComponent(
                 JBLabel(
                     "<html>„domyślna” — cena wbudowana we wtyczkę, „zmieniona” — Twoja poprawka " +
-                        "(przywrócisz ją przyciskiem ↺), „własna” — model dodany przez Ciebie (+). " +
-                        "Modele bez ceny są liczone jako $ 0 i wypisywane w dashboardzie.</html>",
+                        "(przywrócisz ją przyciskiem ↺), „własna” — model dodany przez Ciebie (+), " +
+                        "„brak ceny” — model z Twoich logów liczony jako $ 0 (wpisz stawkę, żeby go wycenić).</html>",
                 ),
             )
             .addLabeledComponent(JBLabel("Plik cennika (opcjonalnie, JSON, `~` rozwijane):"), fileField, 12, false)
@@ -94,7 +96,11 @@ class TokenTrackerConfigurable : Configurable {
         val state = TokenTrackerSettings.getInstance().state
         pricingFileField?.text = state.pricingFile
         defaults = defaultPricingTable(state.pricingFile, Path.of(System.getProperty("user.home")))
-        tableModel?.load(defaults, parsePricingOverrides(state.pricingOverridesJson).valid)
+        tableModel?.load(
+            defaults,
+            parsePricingOverrides(state.pricingOverridesJson).valid,
+            TokenTrackerService.getInstance().unknownModels(),
+        )
     }
 
     override fun disposeUIResources() {

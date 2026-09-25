@@ -31,6 +31,22 @@ fun pricingOverridesFrom(edited: PricingTable, defaults: PricingTable): PricingT
     edited.filter { (model, pricing) -> defaults[model] != pricing }
 
 /**
+ * Wiersz edytora cennika: `defaultPricing == null` — model dodany przez użytkownika,
+ * `pricing == null` — model widziany w logach, który jeszcze nie ma ceny.
+ */
+data class PricingRow(val model: String, val pricing: ModelPricing?, val defaultPricing: ModelPricing?)
+
+/** Modele z cenami domyślnymi (z naniesionymi nadpisaniami), modele własne, na końcu niewycenione z logów. */
+fun buildPricingRows(
+    defaults: PricingTable,
+    overrides: PricingTable,
+    unpricedModels: List<String> = emptyList(),
+): List<PricingRow> =
+    defaults.map { (model, pricing) -> PricingRow(model, overrides[model] ?: pricing, pricing) } +
+        overrides.filterKeys { it !in defaults }.map { (model, pricing) -> PricingRow(model, pricing, null) } +
+        unpricedModels.filter { it !in defaults && it !in overrides }.map { PricingRow(it, null, null) }
+
+/**
  * Odpowiednik `pricingConfig.ts`: tabela wbudowana + opcjonalny plik + nadpisania
  * wpisane wprost (JSON z ustawień, niezaufane). Wpis nadpisania musi mieć cztery
  * skończone, nieujemne liczby — inaczej trafia do `rejectedModels`.

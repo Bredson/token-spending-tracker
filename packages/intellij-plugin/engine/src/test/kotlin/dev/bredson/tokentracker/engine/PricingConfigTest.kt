@@ -97,4 +97,24 @@ class PricingConfigTest {
             pricingOverridesFrom(edited, defaults),
         )
     }
+
+    @Test
+    fun `pricing rows list defaults with overrides, then custom, then unpriced models from logs`() {
+        val base = ModelPricing(1.0, 2.0, 0.1, 1.25)
+        val changed = base.copy(inputPer1M = 9.0)
+        val rows = buildPricingRows(
+            defaults = mapOf("kept" to base, "changed" to base),
+            overrides = mapOf("changed" to changed, "custom" to base),
+            unpricedModels = listOf("openai/gpt-6-astra", "kept", "custom"),
+        )
+        assertEquals(
+            listOf(
+                PricingRow("kept", base, base),
+                PricingRow("changed", changed, base),
+                PricingRow("custom", base, null),
+                PricingRow("openai/gpt-6-astra", null, null),
+            ),
+            rows,
+        )
+    }
 }

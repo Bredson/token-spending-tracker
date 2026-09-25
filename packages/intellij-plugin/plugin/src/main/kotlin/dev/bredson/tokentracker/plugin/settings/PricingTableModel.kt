@@ -2,26 +2,33 @@ package dev.bredson.tokentracker.plugin.settings
 
 import dev.bredson.tokentracker.engine.ModelPricing
 import dev.bredson.tokentracker.engine.PricingTable
+import dev.bredson.tokentracker.engine.buildPricingRows
 import javax.swing.table.AbstractTableModel
 
-/** Wiersz edytora: `default == null` oznacza model dodany przez użytkownika. */
-class PriceRow(var model: String, var pricing: ModelPricing, val default: ModelPricing?) {
+/**
+ * Wiersz edytora: `default == null` — model spoza cennika (dodany przez użytkownika albo z logów),
+ * `pricing == null` — model z logów, któremu nikt jeszcze nie wpisał ceny.
+ */
+class PriceRow(var model: String, var pricing: ModelPricing?, val default: ModelPricing?, val fromLogs: Boolean = false) {
     val isCustom: Boolean get() = default == null
+    val isUnpriced: Boolean get() = pricing == null
     val isChanged: Boolean get() = default != null && default != pricing
 }
 
 class PricingTableModel : AbstractTableModel() {
     private val rows = ArrayList<PriceRow>()
 
-    /** Wszystkie modele z cenami domyślnymi, z nadpisaniami naniesionymi na wierzch. */
-    fun load(defaults: PricingTable, overrides: PricingTable) {
+    /** Modele z cenami domyślnymi (z nadpisaniami), własne, na końcu niewycenione z logów. */
+    fun load(defaults: PricingTable, overrides: PricingTable, unpricedModels: List<String> = emptyList()) {
         rows.clear()
-        defaults.forEach { (model, pricing) -> rows += PriceRow(model, overrides[model] ?: pricing, pricing) }
-        overrides.filterKeys { it !in defaults }.forEach { (model, pricing) -> rows += PriceRow(model, pricing, null) }
+        buildPricingRows(defaults, overrides, unpricedModels).forEach {
+            rows += PriceRow(it.model, it.pricing, it.defaultPricing, fromLogs = it.pricing == null)
+        }
         fireTableDataChanged()
     }
 
-    fun edited(): PricingTable = rows.associate { it.model to it.pricing }
+    /** Modele z logów bez wpisanej ceny nie trafiają do zapisu. */
+    fun edited(): PricingTable = rows.mapNotNull { row -> row.pricing?.let { row.model to it } }.toMap()
 
     fun row(index: Int): PriceRow = rows[index]
 
@@ -34,9 +41,16 @@ class PricingTableModel : AbstractTableModel() {
         return rows.lastIndex
     }
 
+    /** Model własny znika; model z logów wraca do stanu „brak ceny”. */
     fun remove(index: Int) {
-        rows.removeAt(index)
-        fireTableRowsDeleted(index, index)
+        val row = rows[index]
+        if (row.fromLogs) {
+            row.pricing = null
+            fireTableRowsUpdated(index, index)
+        } else {
+            rows.removeAt(index)
+            fireTableRowsDeleted(index, index)
+        }
     }
 
     fun resetToDefault(index: Int) {
@@ -54,20 +68,21 @@ class PricingTableModel : AbstractTableModel() {
     }
 
     override fun isCellEditable(rowIndex: Int, column: Int): Boolean = when (column) {
-        MODEL -> rows[rowIndex].isCustom
+        MODEL -> rows[rowIndex].isCustom && !rows[rowIndex].fromLogs
         SOURCE -> false
         else -> true
     }
 
-    override fun getValueAt(rowIndex: Int, column: Int): Any {
+    override fun getValueAt(rowIndex: Int, column: Int): Any? {
         val row = rows[rowIndex]
         return when (column) {
             MODEL -> row.model
-            INPUT -> row.pricing.inputPer1M
-            OUTPUT -> row.pricing.outputPer1M
-            CACHE_READ -> row.pricing.cacheReadPer1M
-            CACHE_WRITE -> row.pricing.cacheWritePer1M
+            INPUT -> row.pricing?.inputPer1M
+            OUTPUT -> row.pricing?.outputPer1M
+            CACHE_READ -> row.pricing?.cacheReadPer1M
+            CACHE_WRITE -> row.pricing?.cacheWritePer1M
             else -> when {
+                row.isUnpriced -> "brak ceny"
                 row.isCustom -> "własna"
                 row.isChanged -> "zmieniona"
                 else -> "domyślna"
@@ -83,11 +98,13 @@ class PricingTableModel : AbstractTableModel() {
             row.model = name
         } else {
             val price = (value as? Number)?.toDouble()?.takeIf { it.isFinite() && it >= 0 } ?: return
+            // Pierwsza wpisana stawka wycenia model z logów; pozostałe startują od 0.
+            val current = row.pricing ?: ModelPricing(0.0, 0.0, 0.0, 0.0)
             row.pricing = when (column) {
-                INPUT -> row.pricing.copy(inputPer1M = price)
-                OUTPUT -> row.pricing.copy(outputPer1M = price)
-                CACHE_READ -> row.pricing.copy(cacheReadPer1M = price)
-                else -> row.pricing.copy(cacheWritePer1M = price)
+                INPUT -> current.copy(inputPer1M = price)
+                OUTPUT -> current.copy(outputPer1M = price)
+                CACHE_READ -> current.copy(cacheReadPer1M = price)
+                else -> current.copy(cacheWritePer1M = price)
             }
         }
         fireTableRowsUpdated(rowIndex, rowIndex)
