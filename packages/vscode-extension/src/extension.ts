@@ -4,6 +4,7 @@ import { ClaudeCodeSource, Engine } from "@token-tracker/engine";
 import { formatStatusBarText, formatStatusBarTooltip } from "./statusBar";
 import { DashboardPanel } from "./dashboard/panel";
 import { resolvePricingTable } from "./pricingConfig";
+import { PricingEditorPanel } from "./pricing/editorPanel";
 
 let engine: Engine | undefined;
 
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     DashboardPanel.attachEngine(engine);
     await engine.start();
     updateStatusBar();
+    PricingEditorPanel.refresh();
   };
 
   context.subscriptions.push(
@@ -43,6 +45,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (engine) {
         DashboardPanel.createOrShow(context, engine);
       }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("tokenTracker.editPricing", () => {
+      PricingEditorPanel.createOrShow(context, () => engine?.getUnknownModels() ?? []);
     }),
   );
 

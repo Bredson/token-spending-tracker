@@ -13,6 +13,10 @@ Lokalne, w pełni offline śledzenie zużycia tokenów i kosztu **Claude Code** 
 
 ## Ustawienia
 
+Najprościej zmienić ceny komendą **Token Tracker: Edytuj cennik** (Command Palette, `Cmd+Shift+P`). Otwiera się tabela wszystkich modeli: kliknij w stawkę i wpisz nową, **+ Dodaj model** dodaje model spoza tabeli wbudowanej, ↺ przywraca cenę domyślną, a **Zapisz** zapisuje zmienione wiersze do `tokenTracker.pricingOverrides`.
+
+Te same ustawienia można też edytować ręcznie:
+
 | Ustawienie | Opis |
 |---|---|
 | `tokenTracker.pricingOverrides` | Cennik per model wpisany wprost w `settings.json`; ma pierwszeństwo przed plikiem i tabelą wbudowaną. |
@@ -41,7 +45,7 @@ Wtyczka nie wysyła żadnych danych poza Twoją maszynę — cała analiza dziej
 
 - Obsługiwane jest wyłącznie źródło danych Claude Code (architektura pozwala na dodanie kolejnych).
 - Brak trwałego magazynu na dysku — po restarcie VS Code dane są przeliczane od nowa z logów źródłowych (przy ~100 plikach logów trwa to ułamek sekundy).
-- Wbudowany cennik obejmuje modele Anthropic; modele innych dostawców uruchamiane przez bramki (np. `openai/...`) wyceń przez `tokenTracker.pricingOverrides`.
+- Wbudowany cennik obejmuje modele Anthropic; modele innych dostawców uruchamiane przez bramki (np. `openai/...`) wyceń w edytorze cennika (lub przez `tokenTracker.pricingOverrides`).
 
 ## Zgłoszenia i kod
 

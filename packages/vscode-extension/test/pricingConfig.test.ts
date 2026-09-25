@@ -2,7 +2,13 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolvePricingTable } from "../src/pricingConfig";
+import {
+  buildPricingRows,
+  defaultPricingTable,
+  overridesFromEditedRows,
+  parsePricingOverrides,
+  resolvePricingTable,
+} from "../src/pricingConfig";
 
 const validEntry = { inputPer1M: 1, outputPer1M: 2, cacheReadPer1M: 0.1, cacheWritePer1M: 1.25 };
 
@@ -71,5 +77,80 @@ describe("resolvePricingTable", () => {
   it("treats an empty pricingFile string as not configured", () => {
     const { table } = resolvePricingTable({ pricingFile: "   " }, dir);
     expect(table["claude-sonnet-5"].inputPer1M).toBe(2);
+  });
+});
+
+describe("pricing editor helpers", () => {
+  const base = { inputPer1M: 1, outputPer1M: 2, cacheReadPer1M: 0.1, cacheWritePer1M: 1.25 };
+  const changed = { ...base, inputPer1M: 9 };
+  const defaults = { kept: base, changed: base };
+
+  it("defaultPricingTable ignores overrides and prices claude-opus-5-5", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "token-tracker-pricing-defaults-"));
+    try {
+      expect(defaultPricingTable({ pricingOverrides: { x: base } }, dir).x).toBeUndefined();
+      expect(defaultPricingTable({}, dir)["claude-opus-5-5"]).toEqual({
+        inputPer1M: 4,
+        outputPer1M: 20,
+        cacheReadPer1M: 0.2,
+        cacheWritePer1M: 5,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("parsePricingOverrides splits valid entries from rejected ones", () => {
+    expect(parsePricingOverrides({ good: base, bad: { inputPer1M: 1 } })).toEqual({
+      valid: { good: base },
+      rejected: ["bad"],
+    });
+    expect(parsePricingOverrides(undefined)).toEqual({ valid: {}, rejected: [] });
+  });
+
+  it("buildPricingRows lists defaults with overrides applied, then custom models", () => {
+    expect(buildPricingRows(defaults, { changed, custom: base })).toEqual([
+      { model: "kept", pricing: base, defaultPricing: base },
+      { model: "changed", pricing: changed, defaultPricing: base },
+      { model: "custom", pricing: base },
+    ]);
+  });
+
+  it("buildPricingRows appends unpriced models seen in logs, skipping ones that already have a price", () => {
+    expect(buildPricingRows(defaults, { custom: base }, ["openai/gpt-6-astra", "kept", "custom"])).toEqual([
+      { model: "kept", pricing: base, defaultPricing: base },
+      { model: "changed", pricing: base, defaultPricing: base },
+      { model: "custom", pricing: base },
+      { model: "openai/gpt-6-astra", pricing: null },
+    ]);
+  });
+
+  it("overridesFromEditedRows keeps only changed and custom rows", () => {
+    const result = overridesFromEditedRows(
+      [
+        { model: "kept", pricing: base },
+        { model: "changed", pricing: changed },
+        { model: " custom ", pricing: base },
+      ],
+      defaults,
+    );
+    expect(result).toEqual({ ok: true, overrides: { changed, custom: base } });
+  });
+
+  it("overridesFromEditedRows rejects empty names, duplicates and invalid prices", () => {
+    expect(overridesFromEditedRows([{ model: "  ", pricing: base }], defaults)).toMatchObject({ ok: false });
+    expect(
+      overridesFromEditedRows(
+        [
+          { model: "a", pricing: base },
+          { model: "a", pricing: base },
+        ],
+        defaults,
+      ),
+    ).toMatchObject({ ok: false });
+    expect(
+      overridesFromEditedRows([{ model: "a", pricing: { ...base, outputPer1M: -1 } }], defaults),
+    ).toMatchObject({ ok: false });
+    expect(overridesFromEditedRows("nope", defaults)).toMatchObject({ ok: false });
   });
 });

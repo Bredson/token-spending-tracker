@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import * as vscode from "vscode";
 import type { Engine } from "@token-tracker/engine";
 import { openProjectFolder } from "../openProject";
+import { createNonce } from "../nonce";
 import { buildDashboardData } from "./dataProvider";
 import { renderDashboardHtml } from "./webviewHtml";
 
@@ -98,13 +99,4 @@ export class DashboardPanel {
     this.engineSubscription.dispose();
     this.panel.dispose();
   }
-}
-
-function createNonce(): string {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
 }

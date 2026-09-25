@@ -38,6 +38,10 @@
       {
         "command": "tokenTracker.openDashboard",
         "title": "Token Tracker: Open Dashboard"
+      },
+      {
+        "command": "tokenTracker.editPricing",
+        "title": "Token Tracker: Edytuj cennik"
       }
     ],
     "configuration": {

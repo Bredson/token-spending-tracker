@@ -1,5 +1,10 @@
 # Changelog
 
+## Nieopublikowane
+
+- Komenda **Token Tracker: Edytuj cennik** — tabela cen wszystkich modeli z edycją w miejscu, dodawaniem własnych modeli i przywracaniem ceny domyślnej; zapis do `tokenTracker.pricingOverrides`. Modele z Twoich logów, które nie mają ceny, pojawiają się w tabeli ze stanem „brak ceny” — wystarczy wpisać stawkę.
+- Wbudowany cennik: `claude-opus-5-5`.
+
 ## 0.1.0 — 2026-09-24
 
 Pierwsze wydanie publiczne.
