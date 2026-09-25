@@ -49,4 +49,24 @@ intellijPlatform {
             sinceBuild = "252"
         }
     }
+    pluginVerification {
+        ides {
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate, "2025.3.6.1")
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate, "2026.1.5")
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate, "2026.2.3")
+        }
+    }
+}
+
+// `gradle :plugin:runIdeLatest` — ten sam plugin w najnowszym wydaniu IntelliJ IDEA.
+intellijPlatformTesting {
+    runIde {
+        register("runIdeLatest") {
+            type = org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate
+            version = "2026.2.3"
+            task {
+                argumentProviders.add(CommandLineArgumentProvider { listOfNotNull(openProjectPath.orNull) })
+            }
+        }
+    }
 }

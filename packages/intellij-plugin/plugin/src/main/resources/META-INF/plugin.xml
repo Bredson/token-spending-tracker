@@ -4,6 +4,8 @@
     <vendor url="https://github.com/Bredson/token-spending-tracker">Bredson</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <!-- Od 2026.x JCEF to osobny plugin platformy; w 2025.2 jest w rdzeniu, stąd optional. -->
+    <depends optional="true" config-file="token-tracker-jcef.xml">com.intellij.modules.jcef</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <statusBarWidgetFactory
