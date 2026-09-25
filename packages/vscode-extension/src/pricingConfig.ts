@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { loadPricingTable, type ModelPricing, type PricingTable } from "@token-tracker/engine";
+import { loadPricingTable, normalizeModelId, type ModelPricing, type PricingTable } from "@token-tracker/engine";
 
 /** Kształt sekcji `tokenTracker.*` z ustawień VS Code — surowe, niezaufane dane użytkownika. */
 export interface PricingConfig {
@@ -84,6 +84,41 @@ export function buildPricingRows(
     }
   }
   return rows;
+}
+
+// `dostawca/model`, opcjonalnie z sufiksem okna kontekstu — tak wypisuje je np. `/models` bramki API.
+const MODEL_ID_PATTERN = /[A-Za-z0-9][\w-]*\/[A-Za-z0-9][\w.-]*(?:\[1m\])?/g;
+
+export interface ImportedModels {
+  /** Nowe ID (znormalizowane jak w silniku), w kolejności z tekstu. */
+  added: string[];
+  /** Ile rozpoznanych modeli było już w tabeli. */
+  skipped: number;
+}
+
+/**
+ * Wklejona lista modeli (dowolny tekst, np. wynik `/models`) → modele do dopisania
+ * jako „brak ceny”. Porównuje po znormalizowanym ID, więc `anthropic/claude-x[1m]`
+ * trafia na istniejący wiersz `claude-x`.
+ */
+export function modelsToImport(text: string, existingModels: readonly string[]): ImportedModels {
+  const known = new Set(existingModels.map((model) => normalizeModelId(model.trim())));
+  const seen = new Set<string>();
+  const added: string[] = [];
+  let skipped = 0;
+  for (const match of text.match(MODEL_ID_PATTERN) ?? []) {
+    const model = normalizeModelId(match.replace(/\.+$/, ""));
+    if (seen.has(model)) {
+      continue;
+    }
+    seen.add(model);
+    if (known.has(model)) {
+      skipped++;
+    } else {
+      added.push(model);
+    }
+  }
+  return { added, skipped };
 }
 
 export type EditedOverridesResult =

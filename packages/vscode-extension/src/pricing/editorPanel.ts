@@ -4,6 +4,7 @@ import { createNonce } from "../nonce";
 import {
   buildPricingRows,
   defaultPricingTable,
+  modelsToImport,
   overridesFromEditedRows,
   parsePricingOverrides,
   type PricingConfig,
@@ -58,13 +59,17 @@ export class PricingEditorPanel {
     });
 
     this.disposables.push(
-      this.panel.webview.onDidReceiveMessage((message: { type: string; rows?: unknown }) => {
-        if (message.type === "ready") {
-          this.postRows();
-        } else if (message.type === "save") {
-          void this.save(message.rows);
-        }
-      }),
+      this.panel.webview.onDidReceiveMessage(
+        (message: { type: string; rows?: unknown; text?: unknown; existingModels?: unknown }) => {
+          if (message.type === "ready") {
+            this.postRows();
+          } else if (message.type === "save") {
+            void this.save(message.rows);
+          } else if (message.type === "importModels") {
+            this.importModels(message.text, message.existingModels);
+          }
+        },
+      ),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("tokenTracker")) {
           this.postRows();
@@ -85,6 +90,14 @@ export class PricingEditorPanel {
       ),
       pricingFile: config.pricingFile?.trim() ?? "",
     });
+  }
+
+  private importModels(text: unknown, existingModels: unknown): void {
+    const existing = Array.isArray(existingModels)
+      ? existingModels.filter((model): model is string => typeof model === "string")
+      : [];
+    const result = modelsToImport(typeof text === "string" ? text : "", existing);
+    void this.panel.webview.postMessage({ type: "importedModels", ...result });
   }
 
   private async save(rows: unknown): Promise<void> {

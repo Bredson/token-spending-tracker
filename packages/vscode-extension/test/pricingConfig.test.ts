@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buildPricingRows,
   defaultPricingTable,
+  modelsToImport,
   overridesFromEditedRows,
   parsePricingOverrides,
   resolvePricingTable,
@@ -152,5 +153,41 @@ describe("pricing editor helpers", () => {
       overridesFromEditedRows([{ model: "a", pricing: { ...base, outputPer1M: -1 } }], defaults),
     ).toMatchObject({ ok: false });
     expect(overridesFromEditedRows("nope", defaults)).toMatchObject({ ok: false });
+  });
+});
+
+describe("modelsToImport", () => {
+  const gatewayListing = `
+Endpoint : https://llm-api.tools.procountor.com
+User     : someone@example.com
+
+🤖 GPT Models:
+  ○ openai/gpt-5         (EU)       →  /model openai/gpt-5
+  ○ openai/gpt-6-astra              →  /model openai/gpt-6-astra
+
+🔮 Claude Models:
+  ○ anthropic/claude-fable-5-1       (1M)  →  /model anthropic/claude-fable-5-1[1m]
+  ○ anthropic/claude-opus-4-5              →  /model anthropic/claude-opus-4-5
+
+📦 Other Models:
+  ○ openai/DeepSeek-V4-Flash             →  /model openai/DeepSeek-V4-Flash
+`;
+
+  it("extracts provider/model ids, normalizes Claude ids and skips models already in the table", () => {
+    expect(modelsToImport(gatewayListing, ["claude-fable-5-1", "openai/gpt-6-astra"])).toEqual({
+      added: ["openai/gpt-5", "claude-opus-4-5", "openai/DeepSeek-V4-Flash"],
+      skipped: 2,
+    });
+  });
+
+  it("matches existing rows by their normalized id and ignores trailing punctuation", () => {
+    expect(modelsToImport("anthropic/claude-sonnet-5[1m], openai/gpt-5.", ["anthropic/claude-sonnet-5"])).toEqual({
+      added: ["openai/gpt-5"],
+      skipped: 1,
+    });
+  });
+
+  it("returns nothing for text without model ids", () => {
+    expect(modelsToImport("brak modeli tutaj https://example.com", [])).toEqual({ added: [], skipped: 0 });
   });
 });

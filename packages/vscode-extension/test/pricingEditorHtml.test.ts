@@ -24,6 +24,13 @@ describe("renderPricingEditorHtml", () => {
     expect(html).toContain('message.type === "saveError"');
   });
 
+  it("lets the user paste a model list that the host parses (importModels / importedModels)", () => {
+    expect(html).toContain('id="import-open"');
+    expect(html).toContain('id="import-text"');
+    expect(html).toContain('type: "importModels"');
+    expect(html).toContain('message.type === "importedModels"');
+  });
+
   it("never injects model names as HTML (they come from user settings)", () => {
     expect(html).not.toContain("innerHTML = row");
     expect(html).toContain("nameCell.textContent = row.model");

@@ -45,11 +45,15 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
   .status { font-size: 0.9em; opacity: 0.8; }
   .error { display: none; border-left: 3px solid var(--vscode-inputValidation-errorBorder, #be1100); background: var(--vscode-inputValidation-errorBackground, rgba(190,17,0,0.12)); padding: 8px 12px; margin-bottom: 12px; font-size: 0.9em; }
   .error.active { display: block; }
+  .import { display: none; margin-top: 16px; }
+  .import.active { display: block; }
+  .import textarea { width: 100%; box-sizing: border-box; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 6px; font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9em; margin-bottom: 8px; }
+  .import textarea:focus { outline: 1px solid var(--vscode-focusBorder); }
 </style>
 </head>
 <body>
   <h1>Cennik modeli</h1>
-  <p class="hint">Ceny w USD za 1M tokenów. „domyślna” — cena wbudowana (lub z pliku cennika), „zmieniona” — Twoja poprawka (↺ przywraca domyślną), „własna” — model dodany przez Ciebie, „brak ceny” — model z Twoich logów liczony jako $0 (wpisz stawkę, żeby go wycenić). Zapis trafia do ustawienia <code>tokenTracker.pricingOverrides</code>.</p>
+  <p class="hint">Ceny w USD za 1M tokenów. „domyślna” — cena wbudowana (lub z pliku cennika), „zmieniona” — Twoja poprawka (↺ przywraca domyślną), „własna” — model dodany przez Ciebie, „brak ceny” — model z Twoich logów (liczony jako $0) albo z zaimportowanej listy; wpisz stawkę, żeby go wycenić — modele bez ceny nie są zapisywane. Zapis trafia do ustawienia <code>tokenTracker.pricingOverrides</code>.</p>
   <p class="hint" id="pricing-file"></p>
   <div class="error" id="error"></div>
   <table>
@@ -58,10 +62,20 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
   </table>
   <div class="bar">
     <button class="secondary" id="add">+ Dodaj model</button>
+    <button class="secondary" id="import-open">Importuj listę modeli…</button>
     <span class="spacer"></span>
     <span class="status" id="status"></span>
     <button class="secondary" id="discard">Odrzuć zmiany</button>
     <button id="save">Zapisz</button>
+  </div>
+  <p class="hint" id="import-result"></p>
+  <div class="import" id="import">
+    <p class="hint">Wklej listę modeli — np. cały wynik <code>/models</code>. Rozpoznane zostaną ID w postaci <code>dostawca/model</code>; modele, które już są w tabeli, zostaną pominięte, a nowe dopisane jako „brak ceny”.</p>
+    <textarea id="import-text" rows="12" spellcheck="false"></textarea>
+    <div class="bar">
+      <button id="import-apply">Dodaj do tabeli</button>
+      <button class="secondary" id="import-cancel">Anuluj</button>
+    </div>
   </div>
 
 <script nonce="${nonce}">
@@ -71,8 +85,9 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
   let rows = [];
   let savedSnapshot = "[]";
 
+  /** Stan do porównania „czy są niezapisane zmiany” — wiersze bez ceny i tak nie są zapisywane. */
   function snapshot() {
-    return JSON.stringify(rows.map((row) => ({ model: row.model, pricing: row.pricing })));
+    return JSON.stringify(pricedRows());
   }
 
   /** Wiersze do zapisu — modele z logów, którym nie wpisano ceny, pomijamy. */
@@ -235,6 +250,7 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
     rows = message.rows.map((row) => ({
       model: row.model,
       pricing: row.pricing === null ? null : Object.assign({}, row.pricing),
+      // Model spoza cennika bez ceny (z logów lub z importu): nazwa stała, ✕ usuwa tylko cenę.
       fromLogs: row.pricing === null,
       defaultPricing: row.defaultPricing ? Object.assign({}, row.defaultPricing) : undefined,
     }));
@@ -252,6 +268,39 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
     inputs[inputs.length - 1].focus();
   });
 
+  function showImport(visible) {
+    document.getElementById("import").classList.toggle("active", visible);
+    if (visible) {
+      document.getElementById("import-text").focus();
+    }
+  }
+
+  document.getElementById("import-open").addEventListener("click", () => {
+    document.getElementById("import-result").textContent = "";
+    showImport(true);
+  });
+
+  document.getElementById("import-cancel").addEventListener("click", () => showImport(false));
+
+  document.getElementById("import-apply").addEventListener("click", () => {
+    vscode.postMessage({
+      type: "importModels",
+      text: document.getElementById("import-text").value,
+      existingModels: rows.map((row) => row.model),
+    });
+  });
+
+  function applyImport(message) {
+    message.added.forEach((model) => rows.push({ model, pricing: null, fromLogs: true }));
+    render();
+    document.getElementById("import-text").value = "";
+    showImport(false);
+    document.getElementById("import-result").textContent =
+      "Dodano modeli: " + message.added.length +
+      (message.skipped > 0 ? " (pominięto " + message.skipped + " — już były w tabeli)." : ".") +
+      (message.added.length > 0 ? " Są na końcu tabeli jako „brak ceny”." : "");
+  }
+
   document.getElementById("discard").addEventListener("click", () => {
     vscode.postMessage({ type: "ready" });
   });
@@ -267,6 +316,8 @@ export function renderPricingEditorHtml({ cspSource, nonce }: RenderPricingEdito
     const message = event.data;
     if (message.type === "load") {
       load(message);
+    } else if (message.type === "importedModels") {
+      applyImport(message);
     } else if (message.type === "saveError") {
       showError(message.error);
     }

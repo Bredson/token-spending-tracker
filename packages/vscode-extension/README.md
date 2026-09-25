@@ -13,7 +13,7 @@ Lokalne, w pełni offline śledzenie zużycia tokenów i kosztu **Claude Code** 
 
 ## Ustawienia
 
-Najprościej zmienić ceny komendą **Token Tracker: Edytuj cennik** (Command Palette, `Cmd+Shift+P`). Otwiera się tabela wszystkich modeli: kliknij w stawkę i wpisz nową, **+ Dodaj model** dodaje model spoza tabeli wbudowanej, ↺ przywraca cenę domyślną, a **Zapisz** zapisuje zmienione wiersze do `tokenTracker.pricingOverrides`.
+Najprościej zmienić ceny komendą **Token Tracker: Edytuj cennik** (Command Palette, `Cmd+Shift+P`). Otwiera się tabela wszystkich modeli: kliknij w stawkę i wpisz nową, **+ Dodaj model** dodaje model spoza tabeli wbudowanej, ↺ przywraca cenę domyślną, a **Zapisz** zapisuje zmienione wiersze do `tokenTracker.pricingOverrides`. Modele z Twoich logów, które nie mają ceny, są na końcu tabeli jako „brak ceny”. **Importuj listę modeli…** dopisuje modele z wklejonego tekstu (np. całego wyniku `/models` bramki API) — też jako „brak ceny”, do wycenienia. Wiersze bez ceny nie są zapisywane.
 
 Te same ustawienia można też edytować ręcznie:
 

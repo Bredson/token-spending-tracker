@@ -3,6 +3,7 @@
 ## Nieopublikowane
 
 - Komenda **Token Tracker: Edytuj cennik** — tabela cen wszystkich modeli z edycją w miejscu, dodawaniem własnych modeli i przywracaniem ceny domyślnej; zapis do `tokenTracker.pricingOverrides`. Modele z Twoich logów, które nie mają ceny, pojawiają się w tabeli ze stanem „brak ceny” — wystarczy wpisać stawkę.
+- Import listy modeli do edytora cennika: wklej np. wynik `/models`, a rozpoznane modele spoza tabeli trafią do niej jako „brak ceny”. Bez połączeń sieciowych.
 - Wbudowany cennik: `claude-opus-5-5`.
 
 ## 0.1.0 — 2026-09-24
