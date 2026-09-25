@@ -28,8 +28,13 @@ sourceSets.main {
 
 // `gradle :plugin:runIde -PopenProject=/sciezka` otwiera projekt od razu w sandboxie.
 val openProjectPath = providers.gradleProperty("openProject")
+
+// Lambda zbudowana tutaj łapie tylko `path` — odwołanie do właściwości skryptu wprost
+// w lambdzie łapie cały obiekt skryptu, którego configuration cache nie umie zapisać.
+fun openProjectArgs(path: Provider<String>) = CommandLineArgumentProvider { listOfNotNull(path.orNull) }
+
 tasks.runIde {
-    argumentProviders.add(CommandLineArgumentProvider { listOfNotNull(openProjectPath.orNull) })
+    argumentProviders.add(openProjectArgs(openProjectPath))
 }
 
 intellijPlatform {
@@ -65,7 +70,7 @@ intellijPlatformTesting {
             type = org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate
             version = "2026.2.3"
             task {
-                argumentProviders.add(CommandLineArgumentProvider { listOfNotNull(openProjectPath.orNull) })
+                argumentProviders.add(openProjectArgs(openProjectPath))
             }
         }
     }
