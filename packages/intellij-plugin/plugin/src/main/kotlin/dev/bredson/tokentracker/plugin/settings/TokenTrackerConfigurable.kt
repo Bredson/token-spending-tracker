@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -12,6 +13,7 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.FormBuilder
 import dev.bredson.tokentracker.engine.PricingTable
 import dev.bredson.tokentracker.engine.defaultPricingTable
+import dev.bredson.tokentracker.engine.modelsToImport
 import dev.bredson.tokentracker.engine.parsePricingOverrides
 import dev.bredson.tokentracker.engine.pricingOverridesFrom
 import dev.bredson.tokentracker.engine.serializePricingOverrides
@@ -60,6 +62,32 @@ class TokenTrackerConfigurable : Configurable {
 
                 override fun getActionUpdateThread() = ActionUpdateThread.EDT
             })
+            .addExtraAction(object : DumbAwareAction("Importuj listę modeli…", null, AllIcons.ToolbarDecorator.Import) {
+                override fun actionPerformed(e: AnActionEvent) {
+                    val text = Messages.showMultilineInputDialog(
+                        null,
+                        "Wklej listę modeli — np. cały wynik /models. Rozpoznane zostaną ID w postaci dostawca/model;\n" +
+                            "modele, które już są w tabeli, zostaną pominięte, a nowe dopisane jako „brak ceny”.",
+                        "Importuj listę modeli",
+                        "",
+                        null,
+                        null,
+                    ) ?: return
+                    val result = modelsToImport(text, model.models())
+                    val first = model.addUnpriced(result.added)
+                    if (result.added.isNotEmpty()) {
+                        table.changeSelection(first, PricingTableModel.MODEL, false, false)
+                    }
+                    val skipped = if (result.skipped > 0) " (pominięto ${result.skipped} — już były w tabeli)" else ""
+                    Messages.showInfoMessage(
+                        "Dodano modeli: ${result.added.size}$skipped. Nowe są na końcu tabeli jako „brak ceny” — " +
+                            "wpisz stawki i kliknij Apply. Modele bez ceny nie są zapisywane.",
+                        "Importuj listę modeli",
+                    )
+                }
+
+                override fun getActionUpdateThread() = ActionUpdateThread.EDT
+            })
             .createPanel()
 
         return FormBuilder.createFormBuilder()
@@ -69,7 +97,8 @@ class TokenTrackerConfigurable : Configurable {
                 JBLabel(
                     "<html>„domyślna” — cena wbudowana we wtyczkę, „zmieniona” — Twoja poprawka " +
                         "(przywrócisz ją przyciskiem ↺), „własna” — model dodany przez Ciebie (+), " +
-                        "„brak ceny” — model z Twoich logów liczony jako $ 0 (wpisz stawkę, żeby go wycenić).</html>",
+                        "„brak ceny” — model z Twoich logów (liczony jako $ 0) albo z importu; " +
+                        "wpisz stawkę, żeby go wycenić — modele bez ceny nie są zapisywane.</html>",
                 ),
             )
             .addLabeledComponent(JBLabel("Plik cennika (opcjonalnie, JSON, `~` rozwijane):"), fileField, 12, false)

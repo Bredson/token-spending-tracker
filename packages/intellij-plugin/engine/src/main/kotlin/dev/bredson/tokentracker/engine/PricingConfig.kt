@@ -46,6 +46,24 @@ fun buildPricingRows(
         overrides.filterKeys { it !in defaults }.map { (model, pricing) -> PricingRow(model, pricing, null) } +
         unpricedModels.filter { it !in defaults && it !in overrides }.map { PricingRow(it, null, null) }
 
+// `dostawca/model`, opcjonalnie z sufiksem okna kontekstu — tak wypisuje je np. `/models` bramki API.
+private val MODEL_ID_PATTERN = Regex("""[A-Za-z0-9][\w-]*/[A-Za-z0-9][\w.-]*(?:\[1m])?""")
+
+/** `added` — nowe ID (znormalizowane jak w silniku) w kolejności z tekstu; `skipped` — ile już było w tabeli. */
+data class ImportedModels(val added: List<String>, val skipped: Int)
+
+/**
+ * Wklejona lista modeli (dowolny tekst, np. wynik `/models`) → modele do dopisania
+ * jako „brak ceny”. Porównuje po znormalizowanym ID, więc `anthropic/claude-x[1m]`
+ * trafia na istniejący wiersz `claude-x`.
+ */
+fun modelsToImport(text: String, existingModels: Collection<String>): ImportedModels {
+    val known = existingModels.map { normalizeModelId(it.trim()) }.toSet()
+    val found = MODEL_ID_PATTERN.findAll(text).map { normalizeModelId(it.value.trimEnd('.')) }.distinct().toList()
+    val added = found.filter { it !in known }
+    return ImportedModels(added, skipped = found.size - added.size)
+}
+
 /**
  * Odpowiednik `pricingConfig.ts`: tabela wbudowana + opcjonalny plik + nadpisania
  * wpisane wprost (JSON z ustawień, niezaufane). Wpis nadpisania musi mieć cztery

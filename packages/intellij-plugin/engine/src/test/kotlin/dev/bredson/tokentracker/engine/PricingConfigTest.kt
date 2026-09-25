@@ -117,4 +117,26 @@ class PricingConfigTest {
             rows,
         )
     }
+
+    @Test
+    fun `imported model list is parsed into normalized ids, skipping models already in the table`() {
+        val listing = """
+            Endpoint : https://llm-api.tools.procountor.com
+            User     : someone@example.com
+              ○ openai/gpt-5         (EU)       →  /model openai/gpt-5
+              ○ openai/gpt-6-astra              →  /model openai/gpt-6-astra
+              ○ anthropic/claude-fable-5-1       (1M)  →  /model anthropic/claude-fable-5-1[1m]
+              ○ anthropic/claude-opus-4-5              →  /model anthropic/claude-opus-4-5
+              ○ openai/DeepSeek-V4-Flash             →  /model openai/DeepSeek-V4-Flash
+        """.trimIndent()
+        assertEquals(
+            ImportedModels(listOf("openai/gpt-5", "claude-opus-4-5", "openai/DeepSeek-V4-Flash"), skipped = 2),
+            modelsToImport(listing, listOf("claude-fable-5-1", "openai/gpt-6-astra")),
+        )
+        assertEquals(
+            ImportedModels(listOf("openai/gpt-5"), skipped = 1),
+            modelsToImport("anthropic/claude-sonnet-5[1m], openai/gpt-5.", listOf("anthropic/claude-sonnet-5")),
+        )
+        assertEquals(ImportedModels(emptyList(), 0), modelsToImport("brak modeli https://example.com", emptyList()))
+    }
 }

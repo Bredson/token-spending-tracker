@@ -7,7 +7,7 @@ import javax.swing.table.AbstractTableModel
 
 /**
  * Wiersz edytora: `default == null` — model spoza cennika (dodany przez użytkownika albo z logów),
- * `pricing == null` — model z logów, któremu nikt jeszcze nie wpisał ceny.
+ * `pricing == null` — model z logów lub z importu, któremu nikt jeszcze nie wpisał ceny.
  */
 class PriceRow(var model: String, var pricing: ModelPricing?, val default: ModelPricing?, val fromLogs: Boolean = false) {
     val isCustom: Boolean get() = default == null
@@ -42,6 +42,16 @@ class PricingTableModel : AbstractTableModel() {
     }
 
     /** Model własny znika; model z logów wraca do stanu „brak ceny”. */
+    /** Dopisuje modele z importu jako „brak ceny”; zwraca indeks pierwszego nowego wiersza. */
+    fun addUnpriced(models: List<String>): Int {
+        val first = rows.size
+        models.forEach { rows += PriceRow(it, null, null, fromLogs = true) }
+        if (models.isNotEmpty()) fireTableRowsInserted(first, rows.lastIndex)
+        return first
+    }
+
+    fun models(): List<String> = rows.map { it.model }
+
     fun remove(index: Int) {
         val row = rows[index]
         if (row.fromLogs) {
