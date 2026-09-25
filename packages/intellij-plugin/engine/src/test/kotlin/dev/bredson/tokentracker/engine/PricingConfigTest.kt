@@ -64,4 +64,37 @@ class PricingConfigTest {
     fun `blank pricing file path means not configured`(@TempDir home: Path) {
         assertEquals(2.0, resolvePricingTable("   ", null, home).table.getValue("claude-sonnet-5").inputPer1M)
     }
+
+    @Test
+    fun `bundled table prices claude-opus-5-5`() {
+        assertEquals(ModelPricing(4.0, 20.0, 0.2, 5.0), loadPricingTable()["claude-opus-5-5"])
+    }
+
+    @Test
+    fun `parsed overrides split valid entries from rejected ones`() {
+        val parsed = parsePricingOverrides("""{"good":$valid,"bad":{"inputPer1M":1}}""")
+        assertEquals(mapOf("good" to ModelPricing(1.0, 2.0, 0.1, 1.25)), parsed.valid)
+        assertEquals(listOf("bad"), parsed.rejected)
+    }
+
+    @Test
+    fun `serialized overrides parse back to the same map and empty serializes to blank`() {
+        val overrides = mapOf("a" to ModelPricing(1.0, 2.0, 0.1, 1.25), "b" to ModelPricing(0.0, 0.0, 0.0, 0.0))
+        assertEquals(overrides, parsePricingOverrides(serializePricingOverrides(overrides)).valid)
+        assertEquals("", serializePricingOverrides(emptyMap()))
+    }
+
+    @Test
+    fun `only edited or new models end up as overrides`() {
+        val defaults = mapOf("kept" to ModelPricing(1.0, 2.0, 0.1, 1.25), "changed" to ModelPricing(1.0, 2.0, 0.1, 1.25))
+        val edited = mapOf(
+            "kept" to ModelPricing(1.0, 2.0, 0.1, 1.25),
+            "changed" to ModelPricing(9.0, 2.0, 0.1, 1.25),
+            "custom" to ModelPricing(3.0, 4.0, 0.3, 3.75),
+        )
+        assertEquals(
+            mapOf("changed" to ModelPricing(9.0, 2.0, 0.1, 1.25), "custom" to ModelPricing(3.0, 4.0, 0.3, 3.75)),
+            pricingOverridesFrom(edited, defaults),
+        )
+    }
 }
